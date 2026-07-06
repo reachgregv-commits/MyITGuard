@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 
 interface HyperspaceIntroProps {
   onComplete: () => void;
@@ -14,7 +14,7 @@ export default function HyperspaceIntro({ onComplete }: HyperspaceIntroProps) {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     let W = (canvas.width = window.innerWidth);
@@ -26,13 +26,13 @@ export default function HyperspaceIntro({ onComplete }: HyperspaceIntroProps) {
       H = canvas.height = window.innerHeight;
     };
 
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
 
     // Settings
-    const COLORS = ['#39FF14', '#00FFFF']; // Neon Green & Cyan
+    const COLORS = ["#39FF14", "#00FFFF"]; // Neon Green & Cyan
     const GLOBE_RADIUS = 160;
     const FOV = 400;
-    let phase: 'converge' | 'hold' | 'dissolve' = 'converge';
+    let phase: "converge" | "hold" | "dissolve" = "converge";
     let globeRotationY = 0;
     let globeRotationX = 0.2;
 
@@ -82,7 +82,7 @@ export default function HyperspaceIntro({ onComplete }: HyperspaceIntroProps) {
 
       constructor(index: number) {
         this.index = index;
-        this.char = Math.random() > 0.5 ? '1' : '0';
+        this.char = Math.random() > 0.5 ? "1" : "0";
         this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
 
         const angle = Math.random() * Math.PI * 2;
@@ -103,11 +103,17 @@ export default function HyperspaceIntro({ onComplete }: HyperspaceIntroProps) {
       calculate3D() {
         const target = targets3D[this.index];
 
-        let rx = target.x * Math.cos(globeRotationY) - target.z * Math.sin(globeRotationY);
-        let rz = target.x * Math.sin(globeRotationY) + target.z * Math.cos(globeRotationY);
+        let rx =
+          target.x * Math.cos(globeRotationY) -
+          target.z * Math.sin(globeRotationY);
+        let rz =
+          target.x * Math.sin(globeRotationY) +
+          target.z * Math.cos(globeRotationY);
 
-        let ry = target.y * Math.cos(globeRotationX) - rz * Math.sin(globeRotationX);
-        let finalZ = target.y * Math.sin(globeRotationX) + rz * Math.cos(globeRotationX);
+        let ry =
+          target.y * Math.cos(globeRotationX) - rz * Math.sin(globeRotationX);
+        let finalZ =
+          target.y * Math.sin(globeRotationX) + rz * Math.cos(globeRotationX);
 
         this.rotatedZ = finalZ;
 
@@ -119,10 +125,10 @@ export default function HyperspaceIntro({ onComplete }: HyperspaceIntroProps) {
       }
 
       update() {
-        if (phase === 'converge' || phase === 'hold') {
+        if (phase === "converge" || phase === "hold") {
           this.x += (this.projX - this.x) * 0.06;
           this.y += (this.projY - this.y) * 0.06;
-        } else if (phase === 'dissolve') {
+        } else if (phase === "dissolve") {
           this.x += this.vx;
           this.y += this.vy;
           this.alpha *= 0.92;
@@ -156,8 +162,8 @@ export default function HyperspaceIntro({ onComplete }: HyperspaceIntroProps) {
 
     const animate = () => {
       if (!ctx) return;
-      
-      const trailAlpha = phase === 'converge' ? 0.6 : 0.9;
+
+      const trailAlpha = phase === "converge" ? 0.6 : 0.9;
       ctx.fillStyle = `rgba(0, 0, 0, ${trailAlpha})`;
       ctx.fillRect(0, 0, W, H);
 
@@ -187,7 +193,7 @@ export default function HyperspaceIntro({ onComplete }: HyperspaceIntroProps) {
     }, 3000);
 
     const timer2 = setTimeout(() => {
-      phase = 'dissolve';
+      phase = "dissolve";
       setShowLoading(false);
 
       particles.forEach((p) => {
@@ -204,7 +210,7 @@ export default function HyperspaceIntro({ onComplete }: HyperspaceIntroProps) {
     }, 7000);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
       cancelAnimationFrame(animationFrameId);
       clearTimeout(timer1);
       clearTimeout(timer2);
@@ -214,12 +220,12 @@ export default function HyperspaceIntro({ onComplete }: HyperspaceIntroProps) {
   return (
     <div
       style={{
-        position: 'fixed',
+        position: "fixed",
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: '#000',
+        backgroundColor: "#000",
         zIndex: 9999,
         fontFamily: '"Saira Stencil One", sans-serif',
       }}
@@ -227,101 +233,104 @@ export default function HyperspaceIntro({ onComplete }: HyperspaceIntroProps) {
       {/* Neon Center Line */}
       <div
         style={{
-          position: 'absolute',
-          top: '50%',
+          position: "absolute",
+          top: "50%",
           left: 0,
-          width: '100%',
-          height: '2px',
-          background: '#39FF14',
-          boxShadow: '0 0 15px #39FF14, 0 0 30px #39FF14',
-          transformOrigin: 'center',
-          animation: 'pulseLine 3s ease-in-out forwards',
+          width: "100%",
+          height: "2px",
+          background: "#39FF14",
+          boxShadow: "0 0 15px #39FF14, 0 0 30px #39FF14",
+          transformOrigin: "center",
+          animation: "pulseLine 3s ease-in-out forwards",
         }}
       />
-
-      <canvas ref={canvasRef} style={{ position: 'absolute', top: 0, left: 0, zIndex: 1 }} />
-
+      <canvas
+        ref={canvasRef}
+        style={{ position: "absolute", top: 0, left: 0, zIndex: 1 }}
+      />
       {/* Loading UI */}
       <div
         style={{
-          position: 'absolute',
-          bottom: '12%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
+          position: "absolute",
+          bottom: "12%",
+          left: "50%",
+          transform: "translateX(-50%)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
           zIndex: 2,
           opacity: showLoading ? 1 : 0,
-          transition: 'opacity 1s',
+          transition: "opacity 1s",
         }}
       >
         <div
           style={{
-            color: '#39FF14',
+            color: "#39FF14",
             fontFamily: '"VT323", monospace',
-            fontSize: '1.8rem',
-            letterSpacing: '3px',
-            marginBottom: '12px',
-            textShadow: '0 0 8px #39FF14',
-            whiteSpace: 'nowrap',
+            fontSize: "1.8rem",
+            letterSpacing: "3px",
+            marginBottom: "12px",
+            textShadow: "0 0 8px #39FF14",
+            whiteSpace: "nowrap",
           }}
         >
           Securing Connection.
         </div>
         <div
           style={{
-            width: '450px',
-            height: '8px',
-            border: '1px solid #00FFFF',
-            boxShadow: '0 0 6px #00FFFF',
-            position: 'relative',
-            boxSizing: 'border-box',
+            width: "450px",
+            height: "8px",
+            border: "1px solid #00FFFF",
+            boxShadow: "0 0 6px #00FFFF",
+            position: "relative",
+            boxSizing: "border-box",
           }}
         >
           <div
             style={{
-              height: '100%',
+              height: "100%",
               width: `${fillProgress}%`,
-              background: '#00FFFF',
-              boxShadow: '0 0 12px #00FFFF',
-              transition: 'width 2.5s linear',
+              background: "#00FFFF",
+              boxShadow: "0 0 12px #00FFFF",
+              transition: "width 2.5s linear",
             }}
           />
         </div>
       </div>
-
       {/* Final Brand Reveal - Centered */}
       <div
         style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: showBrand ? 'translate(-50%, -50%) scale(1)' : 'translate(-50%, -50%) scale(0.8)',
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: showBrand
+            ? "translate(-50%, -50%) scale(1)"
+            : "translate(-50%, -50%) scale(0.8)",
           zIndex: 3,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '24px',
+          display: "flex",
+          alignItems: "center",
+          gap: "24px",
           opacity: showBrand ? 1 : 0,
-          transition: 'all 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+          transition: "all 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
         }}
       >
-        {/* MyITGuard Logo */}
+        {/* MyITGuard Logo Row */}
         <div className="flex items-center gap-3">
-          <svg className="w-16 h-16 md:w-20 md:h-20" viewBox="0 0 100 100" fill="none">
-            <path d="M10 15 L50 5 L50 95 L10 85 Z" fill="#E8D5A3" />
-            <path d="M90 15 L50 5 L50 95 L90 85 Z" fill="#8B7355" />
-            <path d="M30 35 Q35 50 30 65" stroke="white" strokeWidth="5" strokeLinecap="round" />
-            <path d="M70 35 Q65 50 70 65" stroke="white" strokeWidth="5" strokeLinecap="round" />
-            <line x1="50" y1="45" x2="50" y2="70" stroke="white" strokeWidth="5" strokeLinecap="round" />
-          </svg>
+          <img
+            src="/images/myitguard-logo.png"
+            alt="MyITGuard Logo"
+            className="w-16 h-16 md:w-20 md:h-20 object-contain"
+          />
           <div style={{ fontFamily: '"Saira Stencil One", cursive' }}>
-            <span style={{ fontSize: '48px', fontWeight: '700', color: 'white' }}>MyIT</span>
-            <span style={{ fontSize: '48px', fontWeight: '700', color: '#E8D5A3' }}>Guard</span>
+            <span
+              style={{ fontSize: "48px", fontWeight: "700", color: "white" }}
+            >
+              MyITGuard
+            </span>
           </div>
         </div>
-      </div>
-
+      </div>{" "}
+      {/* <-- Fixed: Added this missing closing tag for the Brand Reveal wrapper */}
       {/* Add CSS animations */}
       <style>{`
         @keyframes pulseLine {

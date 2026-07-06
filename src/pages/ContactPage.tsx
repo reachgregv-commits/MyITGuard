@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Clock, CheckCircle, Shield, Send, AlertTriangle } from 'lucide-react';
+import { Mail, Phone, Clock, CheckCircle, Shield, Send, AlertTriangle } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 
 export default function ContactPage() {
   const location = useLocation();
   const [sent, setSent] = useState(false);
-  const [form, setForm] = useState({ name:'', email:'', company:'', employees:'', service:'', urgency:'standard', message:'' });
+  const [form, setForm] = useState({ name:'', email:'', telephone:'', company:'', employees:'', service:'', urgency:'standard', message:'' });
 
   useEffect(() => {
     if (location.hash === '#contact-hero') {
@@ -57,6 +57,10 @@ export default function ContactPage() {
                     <div>
                       <label className="text-sm text-slate-300 mb-1.5 block">Work email</label>
                       <input type="email" className="input-dark w-full" required value={form.email} onChange={e=>setForm({...form, email:e.target.value})} />
+                    </div>
+                    <div>
+                      <label className="text-sm text-slate-300 mb-1.5 block">Telephone</label>
+                      <input type="tel" className="input-dark w-full" placeholder="(555) 000-0000" value={form.telephone} onChange={e=>setForm({...form, telephone:e.target.value})} />
                     </div>
                     <div>
                       <label className="text-sm text-slate-300 mb-1.5 block">Company</label>
@@ -131,15 +135,11 @@ export default function ContactPage() {
               <div className="space-y-4 text-sm">
                 <div className="flex gap-3">
                   <Phone className="w-5 h-5 mt-0.5" style={{color:'#00ff88'}}/>
-                  <div><div className="text-slate-400">Security line</div><div className="text-white font-medium">+1 (555) 123-4567</div></div>
+                  <div><div className="text-slate-400">Security line</div><div className="text-white font-medium">240-729-0299</div></div>
                 </div>
                 <div className="flex gap-3">
                   <Mail className="w-5 h-5 mt-0.5" style={{color:'#00d4ff'}}/>
-                  <div><div className="text-slate-400">Email</div><div className="text-white font-medium">security@myitguard.com</div></div>
-                </div>
-                <div className="flex gap-3">
-                  <MapPin className="w-5 h-5 mt-0.5" style={{color:'#a78bfa'}}/>
-                  <div><div className="text-slate-400">HQ</div><div className="text-white font-medium">123 Security Boulevard<br/>Cyber City, TC 12345</div></div>
+                  <div><div className="text-slate-400">Email</div><div className="text-white font-medium">info@myitguard.com</div></div>
                 </div>
                 <div className="flex gap-3">
                   <Clock className="w-5 h-5 mt-0.5" style={{color:'#f472b6'}}/>
