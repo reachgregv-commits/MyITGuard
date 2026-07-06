@@ -35,7 +35,7 @@ import {
 } from "lucide-react";
 import { HelmetProvider, Helmet } from "react-helmet-async";
 import {
-  BrowserRouter as Router,
+  HashRouter as Router,
   useLocation,
   useNavigate,
 } from "react-router-dom";
