@@ -317,7 +317,7 @@ export default function HyperspaceIntro({ onComplete }: HyperspaceIntroProps) {
         {/* MyITGuard Logo Row */}
         <div className="flex items-center gap-3">
           <img
-            src="/images/myitguard-logo.png"
+            src="./images/myitguard-logo.png"
             alt="MyITGuard Logo"
             className="w-16 h-16 md:w-20 md:h-20 object-contain"
           />
