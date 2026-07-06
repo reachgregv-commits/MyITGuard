@@ -44,6 +44,7 @@ import ContactPage from "./pages/ContactPage";
 import ThreatGlossary from "./pages/ThreatGlossary";
 import HyperspaceIntro from "./components/HyperspaceIntro";
 import RoiCalculator from "./components/RoiCalculator";
+import logo from "@/images/myitguard-logo.png";
 
 // MyITGuard Logo Component - Official Logo (PNG File + Text)
 function MyITGuardLogo() {
@@ -55,7 +56,7 @@ function MyITGuardLogo() {
         style={{ width: "48px", height: "48px" }}
       >
         <img
-          src="/images/myitguard-logo.png"
+          src={logo}
           alt="MyITGuard"
           className="w-full h-full object-contain"
           style={{ transform: "scale(1.2)" }}
