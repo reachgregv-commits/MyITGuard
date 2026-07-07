@@ -2964,7 +2964,7 @@ Practical, low-friction actions to reduce human risk in 60 days. Use this as a l
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10);
       doc.setTextColor(brandCyan[0], brandCyan[1], brandCyan[2]);
-      doc.addImage("./images/myitguard-logo.png", "PNG", margin, 12, 20, 20);
+      //doc.addImage("./images/myitguard-logo.png", "PNG", margin, 12, 20, 20);
       doc.text("MyITGuard | SECURE RESOURCE", margin, 25);
     };
 
