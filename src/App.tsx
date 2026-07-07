@@ -44,6 +44,7 @@ import ContactPage from "./pages/ContactPage";
 import ThreatGlossary from "./pages/ThreatGlossary";
 import HyperspaceIntro from "./components/HyperspaceIntro";
 import RoiCalculator from "./components/RoiCalculator";
+import emailjs from "@emailjs/browser";
 
 // MyITGuard Logo Component - Official Logo (PNG File + Text)
 function MyITGuardLogo() {
@@ -4639,21 +4640,44 @@ function ContactSection() {
     message: "",
   });
   const [submitted, setSubmitted] = useState(false);
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
-      setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        company: "",
-        service: "",
-        message: "",
+
+    // 1. Paste your exact keys from the EmailJS dashboard inside these single quotes:
+    const SERVICE_ID = "service_vi0p04d";
+    const TEMPLATE_ID = "template_s8897th";
+    const PUBLIC_KEY = "aa3rg1srHmLVgN7wW";
+
+    // 2. Send the form data to EmailJS
+    emailjs
+      .sendForm(SERVICE_ID, TEMPLATE_ID, e.currentTarget, PUBLIC_KEY)
+      .then(() => {
+        // This only runs if the email successfully sent!
+        setSubmitted(true);
+
+        // Clear the form fields after 3 seconds
+        setTimeout(() => {
+          setSubmitted(false);
+          setFormData({
+            name: "",
+            email: "",
+            phone: "",
+            company: "",
+            service: "",
+            message: "",
+          });
+        }, 3000);
+      })
+      .catch((error) => {
+        // This runs if Hostinger SMTP or EmailJS has an error
+        alert(
+          "Something went wrong. Please try again or email us directly at info@myitguard.com",
+        );
+        console.error("EmailJS Error details:", error);
       });
-    }, 3000);
   };
+
   return (
     <section id="contact" className="py-24 relative bg-slate-900/50">
       <div className="max-w-7xl mx-auto px-6">
@@ -4692,6 +4716,7 @@ function ContactSection() {
                   <div className="grid md:grid-cols-2 gap-4">
                     <input
                       type="text"
+                      name="name" // 👈 Added for EmailJS {{name}}
                       value={formData.name}
                       onChange={(e) =>
                         setFormData({ ...formData, name: e.target.value })
@@ -4702,6 +4727,7 @@ function ContactSection() {
                     />
                     <input
                       type="email"
+                      name="email" // 👈 Added for EmailJS {{email}}
                       value={formData.email}
                       onChange={(e) =>
                         setFormData({ ...formData, email: e.target.value })
@@ -4714,6 +4740,7 @@ function ContactSection() {
                   <div className="grid md:grid-cols-2 gap-4">
                     <input
                       type="tel"
+                      name="phone" // 👈 Added for EmailJS {{phone}}
                       value={formData.phone}
                       onChange={(e) =>
                         setFormData({ ...formData, phone: e.target.value })
@@ -4723,6 +4750,7 @@ function ContactSection() {
                     />
                     <input
                       type="text"
+                      name="company" // 👈 Added for EmailJS {{company}}
                       value={formData.company}
                       onChange={(e) =>
                         setFormData({ ...formData, company: e.target.value })
@@ -4733,6 +4761,7 @@ function ContactSection() {
                     />
                   </div>
                   <select
+                    name="service" // 👈 Added for EmailJS {{service}}
                     value={formData.service}
                     onChange={(e) =>
                       setFormData({ ...formData, service: e.target.value })
@@ -4752,6 +4781,7 @@ function ContactSection() {
                     <option value="other">Other</option>
                   </select>
                   <textarea
+                    name="message" // 👈 Added for EmailJS {{message}}
                     value={formData.message}
                     onChange={(e) =>
                       setFormData({ ...formData, message: e.target.value })
