@@ -2937,13 +2937,41 @@ Practical, low-friction actions to reduce human risk in 60 days. Use this as a l
 
   const triggerPdfDownload = (text: string) => {
     const doc = new jsPDF({ unit: "pt", format: "letter" });
-    const brandGreen = [0, 255, 136];
-    const brandCyan = [0, 212, 255];
-    const brandPurple = [139, 92, 246];
-    const body = [226, 232, 240];
-    const margin = 42;
-    const maxWidth = 530;
-    let y = margin;
+
+    // --- 🎨 Premium Cyber Brand Palette ---
+    const bgDark = [11, 19, 43]; // Deep Slate / Midnight Black
+    const brandGreen = [0, 255, 136]; // Neon Cyber Green
+    const brandCyan = [0, 212, 255]; // Accent Cyan
+    const brandPurple = [139, 92, 246]; // Cyber Purple
+    const bodyText = [241, 245, 249]; // Crisp Off-White
+
+    const margin = 50;
+    const maxWidth = 512;
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let y = margin + 40; // Leaves room at the top for the branded header
+
+    // --- 🛠️ Helper: Paint Full-Bleed Dark Background ---
+    const paintDarkBackground = () => {
+      doc.setFillColor(bgDark[0], bgDark[1], bgDark[2]);
+      doc.rect(0, 0, pageWidth, pageHeight, "F");
+
+      // Draw a sleek tech accent bar at the absolute top of every page
+      doc.setFillColor(brandGreen[0], brandGreen[1], brandGreen[2]);
+      doc.rect(0, 0, pageWidth, 4, "F");
+
+      // Render Header Branding on every page
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(brandCyan[0], brandCyan[1], brandCyan[2]);
+      doc.addImage("./images/myitguard-logo.png", "PNG", margin, 12, 100, 20);
+      doc.text("MyITGuard | SECURE RESOURCE", margin, 25);
+    };
+
+    // Initialize Page 1 Background
+    paintDarkBackground();
+
+    // --- 🛠️ Helper: Text Renderer with Smart Page Breaks ---
     const addLine = (
       content: string,
       opts: {
@@ -2954,65 +2982,119 @@ Practical, low-friction actions to reduce human risk in 60 days. Use this as a l
       } = {},
     ) => {
       const size = opts.size ?? 11;
-      const color = opts.color ?? body;
+      const color = opts.color ?? bodyText;
       const bold = opts.bold ?? false;
+
       doc.setFont("helvetica", bold ? "bold" : "normal");
       doc.setFontSize(size);
       doc.setTextColor(color[0], color[1], color[2]);
+
       const textLines = doc.splitTextToSize(
-        opts.bullet ? `• ${content}` : content,
+        opts.bullet ? `  •  ${content}` : content,
         maxWidth,
       );
-      const needed = textLines.length * (size + 4);
-      if (y + needed > doc.internal.pageSize.getHeight() - margin) {
+
+      const lineHeight = size + 6;
+      const neededHeight = textLines.length * lineHeight;
+
+      // If content overflows the page bottom, cycle to a new dark canvas
+      if (y + neededHeight > pageHeight - margin) {
         doc.addPage();
-        y = margin;
+        paintDarkBackground();
+        y = margin + 30; // Reset text line positioning below the header
       }
+
       doc.text(textLines, margin, y);
-      y += needed;
+      y += neededHeight;
     };
+
+    // --- 🛡️ Title Block ---
     addLine("Human Firewall Playbook", {
-      size: 18,
+      size: 22,
       color: brandGreen,
       bold: true,
     });
-    y += 6;
+
+    y += 4;
+    addLine("Enterprise Security Awareness & Training Manual", {
+      size: 11,
+      color: brandCyan,
+      bold: false,
+    });
+
+    // Decorative separation line
+    y += 10;
+    doc.setDrawColor(30, 41, 59);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 20;
+
+    // --- 📖 Parse and Format Markdown lines ---
     text.split("\n").forEach((raw) => {
       const line = raw.trim();
       if (!line) {
-        y += 6;
+        y += 8; // Paragraph space
         return;
       }
-      if (line.startsWith("# "))
-        (addLine(line.replace("# ", ""), {
-          size: 15,
+
+      if (line.startsWith("# ")) {
+        y += 10;
+        addLine(line.replace("# ", ""), {
+          size: 16,
           color: brandGreen,
           bold: true,
-        }),
-          (y += 4));
-      else if (line.startsWith("## "))
+        });
+        y += 6;
+      } else if (line.startsWith("## ")) {
+        y += 6;
         addLine(line.replace("## ", ""), {
-          size: 12,
+          size: 13,
           color: brandCyan,
           bold: true,
         });
-      else if (/^[\d]+\.\s/.test(line))
-        addLine(line, { size: 10, color: body });
-      else if (line.startsWith("- "))
+        y += 4;
+      } else if (/^[\d]+\.\s/.test(line)) {
+        addLine(line, { size: 11, color: bodyText });
+        y += 2;
+      } else if (line.startsWith("- ")) {
         addLine(line.replace("- ", ""), {
-          size: 10,
-          color: body,
+          size: 11,
+          color: bodyText,
           bullet: true,
         });
-      else addLine(line, { size: 10, color: body });
+        y += 2;
+      } else {
+        addLine(line, { size: 11, color: bodyText });
+        y += 2;
+      }
     });
-    y += 12;
-    addLine("MyITGuard • Guarding Every Byte", {
-      size: 9,
+
+    // --- 🔒 Branded Footer Block ---
+    y += 25;
+
+    // Quick boundary guard check before printing final signoff
+    if (y + 40 > pageHeight - margin) {
+      doc.addPage();
+      paintDarkBackground();
+      y = margin + 30;
+    }
+
+    doc.setDrawColor(30, 41, 59);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 20;
+
+    addLine("Distributed by MyITGuard", {
+      size: 10,
       color: brandPurple,
       bold: true,
     });
-    doc.save("human-firewall-playbook.pdf");
+
+    addLine("Guarding Every Byte • info@myitguard.com • +1 (240) 729-0299", {
+      size: 9,
+      color: [148, 163, 184], // Slate Gray secondary text
+    });
+
+    // Save Output
+    doc.save("myitguard-human-firewall-playbook.pdf");
   };
 
   return (
