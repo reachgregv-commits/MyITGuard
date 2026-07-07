@@ -20,7 +20,6 @@ import {
   Search,
   Mail,
   Phone,
-  MapPin,
   CheckCircle,
   ArrowRight,
   Globe,
@@ -2927,7 +2926,7 @@ Practical, low-friction actions to reduce human risk in 60 days. Use this as a l
 
   const handlePlaybookDownload = async () => {
     try {
-      const res = await fetch("/playbooks/human-firewall-playbook.md");
+      const res = await fetch("./playbooks/human-firewall-playbook.md");
       if (!res.ok) throw new Error("fetch-failed");
       const text = await res.text();
       triggerPdfDownload(text);
