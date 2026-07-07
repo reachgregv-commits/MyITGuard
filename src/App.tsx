@@ -2936,42 +2936,45 @@ Practical, low-friction actions to reduce human risk in 60 days. Use this as a l
   };
 
   const triggerPdfDownload = (text: string) => {
+    // Initialize jsPDF with letter format and points as units
     const doc = new jsPDF({ unit: "pt", format: "letter" });
 
-    // --- 🎨 Premium Cyber Brand Palette ---
-    const bgDark = [11, 19, 43]; // Deep Slate / Midnight Black
+    // --- Premium Cyber Brand Palette ---
+    const bgDark = [11, 19, 43]; // Deep Midnight Slate
     const brandGreen = [0, 255, 136]; // Neon Cyber Green
-    const brandCyan = [0, 212, 255]; // Accent Cyan
-    const brandPurple = [139, 92, 246]; // Cyber Purple
+    const brandCyan = [0, 212, 255]; // Tech Accent Cyan
+    const brandPurple = [139, 92, 246]; // Cyber Signature Purple
     const bodyText = [241, 245, 249]; // Crisp Off-White
 
     const margin = 50;
     const maxWidth = 512;
     const pageHeight = doc.internal.pageSize.getHeight();
     const pageWidth = doc.internal.pageSize.getWidth();
-    let y = margin + 40; // Leaves room at the top for the branded header
 
-    // --- 🛠️ Helper: Paint Full-Bleed Dark Background ---
+    // Starting Y coordinate below the branded header
+    let y = margin + 40;
+
+    // -Helper: Paint Full-Bleed Dark Background & Header -
     const paintDarkBackground = () => {
+      // Draw background fill
       doc.setFillColor(bgDark[0], bgDark[1], bgDark[2]);
       doc.rect(0, 0, pageWidth, pageHeight, "F");
 
-      // Draw a sleek tech accent bar at the absolute top of every page
+      // Top neon highlight bar
       doc.setFillColor(brandGreen[0], brandGreen[1], brandGreen[2]);
       doc.rect(0, 0, pageWidth, 4, "F");
 
-      // Render Header Branding on every page
+      // Render Header Branding
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10);
       doc.setTextColor(brandCyan[0], brandCyan[1], brandCyan[2]);
-      //doc.addImage("./images/myitguard-logo.png", "PNG", margin, 12, 20, 20);
       doc.text("MyITGuard | SECURE RESOURCE", margin, 25);
     };
 
-    // Initialize Page 1 Background
+    // Initialize Page 1 Canvas
     paintDarkBackground();
 
-    // --- 🛠️ Helper: Text Renderer with Smart Page Breaks ---
+    // --- Helper: Standard Text Renderer with Smart Page Breaks ---
     const addLine = (
       content: string,
       opts: {
@@ -2997,18 +3000,18 @@ Practical, low-friction actions to reduce human risk in 60 days. Use this as a l
       const lineHeight = size + 6;
       const neededHeight = textLines.length * lineHeight;
 
-      // If content overflows the page bottom, cycle to a new dark canvas
+      // If content overflows the sheet bounds, add a new running page
       if (y + neededHeight > pageHeight - margin) {
         doc.addPage();
         paintDarkBackground();
-        y = margin + 30; // Reset text line positioning below the header
+        y = margin + 30; // Reset text line tracking below running header
       }
 
       doc.text(textLines, margin, y);
       y += neededHeight;
     };
 
-    // --- 🛡️ Title Block ---
+    // --- Title Layout Banner ---
     addLine("Human Firewall Playbook", {
       size: 22,
       color: brandGreen,
@@ -3022,17 +3025,17 @@ Practical, low-friction actions to reduce human risk in 60 days. Use this as a l
       bold: false,
     });
 
-    // Decorative separation line
+    // Subtle separator line below title
     y += 10;
     doc.setDrawColor(30, 41, 59);
     doc.line(margin, y, pageWidth - margin, y);
     y += 20;
 
-    // --- 📖 Parse and Format Markdown lines ---
+    // --- Parse and Format Markdown Lines Live ---
     text.split("\n").forEach((raw) => {
       const line = raw.trim();
       if (!line) {
-        y += 8; // Paragraph space
+        y += 8; // Blank spacer row between paragraphs
         return;
       }
 
@@ -3052,15 +3055,67 @@ Practical, low-friction actions to reduce human risk in 60 days. Use this as a l
           bold: true,
         });
         y += 4;
+      } else if (line.startsWith("- ") || line.startsWith("• ")) {
+        // Clean out standard markdown bullet prefixes
+        let cleanLine = line.replace(/^[-•]\s*/, "");
+
+        // Match bold header format within a list item (e.g. "**Label**: Body Text")
+        if (cleanLine.startsWith("**") && cleanLine.includes("**:", 2)) {
+          const parts = cleanLine.split("**:");
+          const boldLabel = parts[0].replace(/\*\*/g, "") + ":"; // Ex: "MFA everywhere:"
+          const normalText = parts.slice(1).join("**:"); // Ex: " Okta/M365/SSO..."
+
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(11);
+          doc.setTextColor(bodyText[0], bodyText[1], bodyText[2]);
+
+          // Measure text footprint before placing on grid
+          const bulletSymbol = "  •  ";
+          const bulletWidth = doc.getTextWidth(bulletSymbol);
+
+          doc.setFont("helvetica", "bold");
+          const labelWidth = doc.getTextWidth(boldLabel);
+
+          doc.setFont("helvetica", "normal");
+          // Deduct bullet and label footprint from maximum rendering track
+          const textLines = doc.splitTextToSize(
+            normalText,
+            maxWidth - bulletWidth - labelWidth,
+          );
+          const lineUnitHeight = 17;
+          const neededBlockHeight =
+            Math.max(1, textLines.length) * lineUnitHeight;
+
+          // Check boundary limit before drawing compound text block
+          if (y + neededBlockHeight > pageHeight - margin) {
+            doc.addPage();
+            paintDarkBackground();
+            y = margin + 30;
+          }
+
+          // 1. Draw bullet symbol
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(bodyText[0], bodyText[1], bodyText[2]);
+          doc.text(bulletSymbol, margin, y);
+
+          // 2. Draw inline bold label
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(brandGreen[0], brandGreen[1], brandGreen[2]);
+          doc.text(boldLabel, margin + bulletWidth, y);
+
+          // 3. Draw standard wrapped text payload right next to it
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(bodyText[0], bodyText[1], bodyText[2]);
+          doc.text(textLines, margin + bulletWidth + labelWidth, y);
+
+          y += neededBlockHeight;
+        } else {
+          // Standard text bullet fallback
+          addLine(cleanLine, { size: 11, color: bodyText, bullet: true });
+          y += 2;
+        }
       } else if (/^[\d]+\.\s/.test(line)) {
         addLine(line, { size: 11, color: bodyText });
-        y += 2;
-      } else if (line.startsWith("- ")) {
-        addLine(line.replace("- ", ""), {
-          size: 11,
-          color: bodyText,
-          bullet: true,
-        });
         y += 2;
       } else {
         addLine(line, { size: 11, color: bodyText });
@@ -3068,16 +3123,17 @@ Practical, low-friction actions to reduce human risk in 60 days. Use this as a l
       }
     });
 
-    // --- 🔒 Branded Footer Block ---
+    // --- Branded Secure Footer Block ---
     y += 25;
 
-    // Quick boundary guard check before printing final signoff
+    // Quick room verification before compiling footer footprint
     if (y + 40 > pageHeight - margin) {
       doc.addPage();
       paintDarkBackground();
       y = margin + 30;
     }
 
+    // Divider line above footer
     doc.setDrawColor(30, 41, 59);
     doc.line(margin, y, pageWidth - margin, y);
     y += 20;
@@ -3090,10 +3146,10 @@ Practical, low-friction actions to reduce human risk in 60 days. Use this as a l
 
     addLine("Guarding Every Byte • info@myitguard.com • +1 (240) 729-0299", {
       size: 9,
-      color: [148, 163, 184], // Slate Gray secondary text
+      color: [148, 163, 184], // Muted slate gray meta font
     });
 
-    // Save Output
+    // Save and pop the download payload
     doc.save("myitguard-human-firewall-playbook.pdf");
   };
 
