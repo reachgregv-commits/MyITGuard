@@ -5013,7 +5013,6 @@ interface FooterProps {
 }
 
 function Footer({ onNavigate, setActivePolicy }: FooterProps) {
-  // Helper to trigger policy state via prop or global window fallback
   const triggerPolicy = (type: "privacy" | "cookie") => {
     if (setActivePolicy) {
       setActivePolicy(type);
@@ -5056,52 +5055,36 @@ function Footer({ onNavigate, setActivePolicy }: FooterProps) {
             <h4 className="font-semibold mb-4">Services</h4>
             <ul className="space-y-2 text-slate-400">
               <li>
-                <a
-                  href="#services"
-                  onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                    e.preventDefault();
-                    onNavigate("services");
-                  }}
-                  className="hover:text-cyber-green transition-colors"
+                <button
+                  onClick={() => onNavigate("services")}
+                  className="hover:text-cyber-green transition-colors text-left bg-transparent border-none p-0 cursor-pointer"
                 >
                   Virtual CISO
-                </a>
+                </button>
               </li>
               <li>
-                <a
-                  href="#services"
-                  onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                    e.preventDefault();
-                    onNavigate("services");
-                  }}
-                  className="hover:text-cyber-green transition-colors"
+                <button
+                  onClick={() => onNavigate("services")}
+                  className="hover:text-cyber-green transition-colors text-left bg-transparent border-none p-0 cursor-pointer"
                 >
                   Compliance Solutions
-                </a>
+                </button>
               </li>
               <li>
-                <a
-                  href="#services"
-                  onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                    e.preventDefault();
-                    onNavigate("services");
-                  }}
-                  className="hover:text-cyber-green transition-colors"
+                <button
+                  onClick={() => onNavigate("services")}
+                  className="hover:text-cyber-green transition-colors text-left bg-transparent border-none p-0 cursor-pointer"
                 >
                   Risk Assessment
-                </a>
+                </button>
               </li>
               <li>
-                <a
-                  href="#services"
-                  onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                    e.preventDefault();
-                    onNavigate("services");
-                  }}
-                  className="hover:text-cyber-green transition-colors"
+                <button
+                  onClick={() => onNavigate("services")}
+                  className="hover:text-cyber-green transition-colors text-left bg-transparent border-none p-0 cursor-pointer"
                 >
                   Security Training
-                </a>
+                </button>
               </li>
             </ul>
           </div>
@@ -5109,52 +5092,36 @@ function Footer({ onNavigate, setActivePolicy }: FooterProps) {
             <h4 className="font-semibold mb-4">Resources</h4>
             <ul className="space-y-2 text-slate-400">
               <li>
-                <a
-                  href="#resources"
-                  onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                    e.preventDefault();
-                    onNavigate("resources");
-                  }}
-                  className="hover:text-cyber-green transition-colors"
+                <button
+                  onClick={() => onNavigate("resources")}
+                  className="hover:text-cyber-green transition-colors text-left bg-transparent border-none p-0 cursor-pointer"
                 >
                   Compliance Checklists
-                </a>
+                </button>
               </li>
               <li>
-                <a
-                  href="#roi-calculator"
-                  onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                    e.preventDefault();
-                    onNavigate("roi");
-                  }}
-                  className="hover:text-cyber-green transition-colors"
+                <button
+                  onClick={() => onNavigate("roi")}
+                  className="hover:text-cyber-green transition-colors text-left bg-transparent border-none p-0 cursor-pointer"
                 >
                   ROI Calculator
-                </a>
+                </button>
               </li>
               <li>
-                <a
-                  href="#resources"
-                  onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                    e.preventDefault();
-                    onNavigate("resources");
-                  }}
-                  className="hover:text-cyber-green transition-colors"
+                <button
+                  onClick={() => onNavigate("resources")}
+                  className="hover:text-cyber-green transition-colors text-left bg-transparent border-none p-0 cursor-pointer"
                 >
                   Human Firewall Playbook
-                </a>
+                </button>
               </li>
               <li>
-                <a
-                  href="#blog"
-                  onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                    e.preventDefault();
-                    onNavigate("blog");
-                  }}
-                  className="hover:text-cyber-green transition-colors"
+                <button
+                  onClick={() => onNavigate("blog")}
+                  className="hover:text-cyber-green transition-colors text-left bg-transparent border-none p-0 cursor-pointer"
                 >
                   Blog
-                </a>
+                </button>
               </li>
             </ul>
           </div>
@@ -5162,28 +5129,20 @@ function Footer({ onNavigate, setActivePolicy }: FooterProps) {
             <h4 className="font-semibold mb-4">Company</h4>
             <ul className="space-y-2 text-slate-400">
               <li>
-                <a
-                  href="#about"
-                  onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                    e.preventDefault();
-                    onNavigate("about");
-                  }}
-                  className="hover:text-cyber-green transition-colors"
+                <button
+                  onClick={() => onNavigate("about")}
+                  className="hover:text-cyber-green transition-colors text-left bg-transparent border-none p-0 cursor-pointer"
                 >
                   About Us
-                </a>
+                </button>
               </li>
               <li>
-                <a
-                  href="#contact"
-                  onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                    e.preventDefault();
-                    onNavigate("contact");
-                  }}
-                  className="hover:text-cyber-green transition-colors"
+                <button
+                  onClick={() => onNavigate("contact")}
+                  className="hover:text-cyber-green transition-colors text-left bg-transparent border-none p-0 cursor-pointer"
                 >
                   Contact
-                </a>
+                </button>
               </li>
               <li>
                 <a
@@ -5194,16 +5153,12 @@ function Footer({ onNavigate, setActivePolicy }: FooterProps) {
                 </a>
               </li>
               <li>
-                <a
-                  href="#privacy"
-                  onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                    e.preventDefault();
-                    triggerPolicy("privacy");
-                  }}
-                  className="hover:text-cyber-green transition-colors"
+                <button
+                  onClick={() => triggerPolicy("privacy")}
+                  className="hover:text-cyber-green transition-colors text-left bg-transparent border-none p-0 cursor-pointer block"
                 >
                   Privacy Policy
-                </a>
+                </button>
               </li>
             </ul>
           </div>
@@ -5213,30 +5168,22 @@ function Footer({ onNavigate, setActivePolicy }: FooterProps) {
           <p className="text-slate-500 text-sm">
             © 2025 MyITGuard. All rights reserved.
           </p>
-          <div className="flex gap-6 text-sm text-slate-500">
-            <a
-              href="#privacy"
-              onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                e.preventDefault();
-                triggerPolicy("privacy");
-              }}
-              className="hover:text-cyber-green transition-colors"
+          <div className="flex gap-6 text-sm text-slate-500 items-center">
+            <button
+              onClick={() => triggerPolicy("privacy")}
+              className="hover:text-cyber-green transition-colors bg-transparent border-none p-0 cursor-pointer"
             >
               Privacy Policy
-            </a>
+            </button>
             <a href="#" className="hover:text-cyber-green transition-colors">
               Terms of Service
             </a>
-            <a
-              href="#cookies"
-              onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                e.preventDefault();
-                triggerPolicy("cookie");
-              }}
-              className="hover:text-cyber-green transition-colors"
+            <button
+              onClick={() => triggerPolicy("cookie")}
+              className="hover:text-cyber-green transition-colors bg-transparent border-none p-0 cursor-pointer"
             >
               Cookie Policy
-            </a>
+            </button>
           </div>
         </div>
       </div>
