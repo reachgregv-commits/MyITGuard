@@ -44,6 +44,7 @@ import ThreatGlossary from "./pages/ThreatGlossary";
 import HyperspaceIntro from "./components/HyperspaceIntro";
 import RoiCalculator from "./components/RoiCalculator";
 import emailjs from "@emailjs/browser";
+import { PolicyModal } from "./components/PolicyModal";
 
 // MyITGuard Logo Component - Official Logo (PNG File + Text)
 function MyITGuardLogo() {
@@ -5189,7 +5190,7 @@ function Footer({ onNavigate }: { onNavigate: (section: string) => void }) {
         <div className="section-divider mb-8" />
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-slate-500 text-sm">
-            © 2026 MyITGuard. All rights reserved.
+            © 2025 MyITGuard. All rights reserved.
           </p>
           <div className="flex gap-6 text-sm text-slate-500">
             <a href="#" className="hover:text-cyber-green transition-colors">
@@ -5209,7 +5210,11 @@ function Footer({ onNavigate }: { onNavigate: (section: string) => void }) {
 }
 
 // Main App Component with Routing
-function AppContent() {
+function AppContent({
+  setActivePolicy,
+}: {
+  setActivePolicy: (type: "privacy" | "cookie" | null) => void;
+}) {
   const location = useLocation();
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState("home");
@@ -5366,6 +5371,66 @@ export default function App() {
               content="MyITGuard provides Virtual CISO services, HIPAA/SOC 2/CMMC compliance, cyber risk assessments, and security awareness training."
             />
           </Helmet>
+          {/* 2. Pass down the state setter so your footer buttons inside AppContent can open them */}
+          <AppContent setActivePolicy={setActivePolicy} />
+
+          {/* 3. The Modals sit here at the root level */}
+          <PolicyModal
+            isOpen={activePolicy === "privacy"}
+            onClose={() => setActivePolicy(null)}
+            title="Privacy Policy"
+          >
+            <p className="text-xs text-slate-400">Last updated: July 2026</p>
+            <h4 className="text-lg font-semibold text-white mt-4">
+              1. Information We Collect
+            </h4>
+            <p>
+              When you request a consultation on our website, we collect
+              personal information you voluntarily provide: Full Name, Work
+              Email, Phone Number, Company Name, and details about your security
+              needs.
+            </p>
+            <h4 className="text-lg font-semibold text-white mt-4">
+              2. How We Use Your Information
+            </h4>
+            <p>
+              We use this data exclusively to evaluate your cybersecurity
+              posture, respond to your service requests, and deliver our
+              resources. We never sell your data.
+            </p>
+            <h4 className="text-lg font-semibold text-white mt-4">
+              3. Third-Party Data Transmission
+            </h4>
+            <p>
+              Contact form submissions are processed securely via EmailJS and
+              routed directly to our internal email infrastructure hosted by
+              Hostinger.
+            </p>
+          </PolicyModal>
+
+          <PolicyModal
+            isOpen={activePolicy === "cookie"}
+            onClose={() => setActivePolicy(null)}
+            title="Cookie Policy"
+          >
+            <p className="text-xs text-slate-400">Last updated: July 2026</p>
+            <h4 className="text-lg font-semibold text-white mt-4">
+              1. What Are Cookies?
+            </h4>
+            <p>
+              Cookies are small text files stored on your device to help
+              websites function efficiently.
+            </p>
+            <h4 className="text-lg font-semibold text-white mt-4">
+              2. How We Use Cookies
+            </h4>
+            <p>
+              This website is a lightweight, static React application. We do not
+              run invasive tracking or advertising cookies. We only use
+              essential, technical cookies required for the safety and
+              performance of the site interface.
+            </p>
+          </PolicyModal>
           <AppContent />
         </div>
       </HelmetProvider>
