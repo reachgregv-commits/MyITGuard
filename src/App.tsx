@@ -5357,6 +5357,9 @@ function AppContent({
 }
 
 export default function App() {
+  const [activePolicy, setActivePolicy] = React.useState<
+    "privacy" | "cookie" | null
+  >(null);
   return (
     <Router>
       <HelmetProvider>
