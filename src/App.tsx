@@ -5007,7 +5007,12 @@ function ContactSection() {
 }
 
 // Footer
-function Footer({ onNavigate }: { onNavigate: (section: string) => void }) {
+interface FooterProps {
+  onNavigate: (section: string) => void;
+  setActivePolicy?: (type: "privacy" | "cookie" | null) => void;
+}
+
+function Footer({ onNavigate, setActivePolicy }: FooterProps) {
   return (
     <footer className="py-16 border-t border-slate-800">
       <div className="max-w-7xl mx-auto px-6">
@@ -5178,7 +5183,11 @@ function Footer({ onNavigate }: { onNavigate: (section: string) => void }) {
               </li>
               <li>
                 <a
-                  href="#"
+                  href="#privacy"
+                  onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                    e.preventDefault();
+                    if (setActivePolicy) setActivePolicy("privacy");
+                  }}
                   className="hover:text-cyber-green transition-colors"
                 >
                   Privacy Policy
@@ -5193,13 +5202,27 @@ function Footer({ onNavigate }: { onNavigate: (section: string) => void }) {
             © 2025 MyITGuard. All rights reserved.
           </p>
           <div className="flex gap-6 text-sm text-slate-500">
-            <a href="#" className="hover:text-cyber-green transition-colors">
+            <a
+              href="#privacy"
+              onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                e.preventDefault();
+                if (setActivePolicy) setActivePolicy("privacy");
+              }}
+              className="hover:text-cyber-green transition-colors"
+            >
               Privacy Policy
             </a>
             <a href="#" className="hover:text-cyber-green transition-colors">
               Terms of Service
             </a>
-            <a href="#" className="hover:text-cyber-green transition-colors">
+            <a
+              href="#cookies"
+              onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                e.preventDefault();
+                if (setActivePolicy) setActivePolicy("cookie");
+              }}
+              className="hover:text-cyber-green transition-colors"
+            >
               Cookie Policy
             </a>
           </div>
