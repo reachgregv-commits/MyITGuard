@@ -5218,7 +5218,9 @@ function AppContent({
   const location = useLocation();
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState("home");
-  const [selectedArticle, setSelectedArticle] = useState<BlogArticle | null>(null);
+  const [selectedArticle, setSelectedArticle] = useState<BlogArticle | null>(
+    null,
+  );
   const [selectedService, setSelectedService] = useState<string | null>(null);
 
   // Check localStorage synchronously
@@ -5287,7 +5289,9 @@ function AppContent({
           activeSection={activeSection}
           setActiveSection={setActiveSection}
         />
-        <div style={{ opacity: showIntro ? 0 : 1, transition: "opacity 1s ease" }}>
+        <div
+          style={{ opacity: showIntro ? 0 : 1, transition: "opacity 1s ease" }}
+        >
           <ContactPage />
         </div>
         {/* Pass state setter to Footer */}
@@ -5304,7 +5308,9 @@ function AppContent({
           activeSection={activeSection}
           setActiveSection={setActiveSection}
         />
-        <div style={{ opacity: showIntro ? 0 : 1, transition: "opacity 1s ease" }}>
+        <div
+          style={{ opacity: showIntro ? 0 : 1, transition: "opacity 1s ease" }}
+        >
           <ThreatGlossary />
         </div>
         {/* Pass state setter to Footer */}
@@ -5313,58 +5319,7 @@ function AppContent({
     );
   }
 
-  // Homepage with all sections
-  return (
-    <>
-      {showIntro && <HyperspaceIntro onComplete={handleIntroComplete} />}
-      <Navigation
-        activeSection={activeSection}
-        setActiveSection={setActiveSection}
-      />
-      <main style={{ opacity: showIntro ? 0 : 1, transition: "opacity 1s ease" }}>
-        <HeroSection onNavigate={handleNavigate} />
-        <ServicesSection onServiceSelect={handleServiceSelect} />
-        <ResourcesSection />
-        <PlansSection />
-        <TestimonialsSection />
-        <BlogSection onArticleSelect={handleArticleSelect} />
-        <AboutSection />
-        <ContactSection />
-      </main>
-      {selectedArticle && (
-        <ArticleModal article={selectedArticle} onClose={handleCloseArticle} />
-      )}
-      {selectedService && (
-        <ServiceModal
-          serviceName={selectedService}
-          onClose={handleCloseService}
-        />
-      )}
-      {/* Pass state setter to Footer */}
-      <Footer onNavigate={handleNavigate} setActivePolicy={setActivePolicy} />
-    </>
-  );
-}
-
-  if (location.hash === "#/glossary" || location.pathname === "/glossary") {
-    return (
-      <>
-        {showIntro && <HyperspaceIntro onComplete={handleIntroComplete} />}
-        <Navigation
-          activeSection={activeSection}
-          setActiveSection={setActiveSection}
-        />
-        <div
-          style={{ opacity: showIntro ? 0 : 1, transition: "opacity 1s ease" }}
-        >
-          <ThreatGlossary />
-        </div>
-        <Footer onNavigate={handleNavigate} />
-      </>
-    );
-  }
-
-  // Homepage with all sections
+  // Homepage with all sections (This must sit at the very end of AppContent!)
   return (
     <>
       {showIntro && <HyperspaceIntro onComplete={handleIntroComplete} />}
@@ -5393,12 +5348,12 @@ function AppContent({
           onClose={handleCloseService}
         />
       )}
-      <Footer onNavigate={handleNavigate} />
+      {/* Pass state setter to Footer */}
+      <Footer onNavigate={handleNavigate} setActivePolicy={setActivePolicy} />
     </>
-        );
-      } // This closes the main AppContent function cleanly
-
-      export default function App() {
+  );
+} // This closes the main AppContent function cleanly
+export default function App() {
   const [activePolicy, setActivePolicy] = React.useState<
     "privacy" | "cookie" | null
   >(null);
