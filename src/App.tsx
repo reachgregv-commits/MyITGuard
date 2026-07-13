@@ -5360,6 +5360,8 @@ export default function App() {
   const [activePolicy, setActivePolicy] = React.useState<
     "privacy" | "cookie" | null
   >(null);
+  // This exposes the setter globally to the entire application
+  (window as any).setActivePolicy = setActivePolicy;
   return (
     <Router>
       <HelmetProvider>
@@ -5378,60 +5380,346 @@ export default function App() {
           <AppContent setActivePolicy={setActivePolicy} />
 
           {/* 3. The Modals sit here at the root level */}
+          {/* Official Privacy Policy Modal */}
           <PolicyModal
             isOpen={activePolicy === "privacy"}
             onClose={() => setActivePolicy(null)}
             title="Privacy Policy"
           >
-            <p className="text-xs text-slate-400">Last updated: July 2026</p>
-            <h4 className="text-lg font-semibold text-white mt-4">
+            <p className="text-xs text-slate-400 font-mono">
+              Effective Date: March 15, 2025.
+            </p>
+            <p className="mt-2 text-slate-300">
+              MyITGuard (“we,” “us,” or “our”) respects your privacy and is
+              committed to protecting it through this Privacy Policy. This
+              document outlines the types of Personal Data we collect, how we
+              use it, and the rights you have regarding your information.
+            </p>
+
+            <h4 className="text-lg font-semibold text-white mt-6 border-b border-slate-800 pb-1">
               1. Information We Collect
             </h4>
             <p>
-              When you request a consultation on our website, we collect
-              personal information you voluntarily provide: Full Name, Work
-              Email, Phone Number, Company Name, and details about your security
-              needs.
+              The Personal Data we collect about you depends on the nature of
+              our relationship, such as whether it is gathered through our
+              Websites, Services, or marketing activities. We collect most of
+              this Personal Data directly from you—through your interactions
+              with us or the Websites and the setup and use of the Services.
+              MyITGuard also collects Personal Data through its normal business
+              operations and in the administration of customer relationships.
+              Personal Data may be collected as follows:
             </p>
-            <h4 className="text-lg font-semibold text-white mt-4">
+
+            <h5 className="text-md font-medium text-emerald-400 mt-4">
+              Account and Services Information
+            </h5>
+            <p>
+              We collect information from you to create an account to use our
+              Services. Such information may include your name, email address,
+              phone number, and password, among other items. We collect feedback
+              you provide to us through the Services, and we collect data about
+              how you use and interact with features in the Services.
+            </p>
+
+            <h5 className="text-md font-medium text-emerald-400 mt-4">
+              Data You Give Us
+            </h5>
+            <p>
+              In order to enjoy the full functionality of the Websites or
+              Services or to conduct business with us, you may be prompted to
+              provide us with certain Personal Data. Such information may
+              include your name, email address, phone number, and title, among
+              other items, and is generally submitted:
+            </p>
+            <ul className="list-disc pl-5 space-y-1 mt-2 text-slate-300">
+              <li>
+                By filling in forms (for example, a “Contact Us” form) on our
+                Websites, at a trade show, or anywhere else we conduct business
+              </li>
+              <li>By downloading or accessing the Services</li>
+              <li>
+                By downloading documentation from our Services or Websites
+              </li>
+              <li>By subscribing to newsletters or other communications</li>
+              <li>By using a chatbot</li>
+              <li>
+                By corresponding with us by phone, e-mail, or otherwise using
+                our contact details
+              </li>
+            </ul>
+
+            <h5 className="text-md font-medium text-emerald-400 mt-4">
+              Customer Support and Service
+            </h5>
+            <p>
+              When customers contact us for support or other customer service
+              requests, we maintain support tickets and other records related to
+              the requests. We may also collect call recordings related to
+              support and customer service-related calls. If you use the chatbot
+              feature on our Website or in our Services, we collect data that
+              you choose to provide in your communications with the chatbot.
+              This information can include your name, email address, phone
+              number, account name or number, IP address, and similar details.
+            </p>
+
+            <h5 className="text-md font-medium text-emerald-400 mt-4">
+              Business Contact and Customer Relationship Management
+            </h5>
+            <p>
+              We collect and maintain information about our customers, including
+              that gathered by our communications or on social networks, which
+              may include company name, business contact name and title, phone
+              number, email, and other contact details. We may also collect
+              billing address, financial account, credit card information, order
+              details, subscription and license information, and usage details.
+              In addition, we collect user credential and profile data (name,
+              contact, authorized users).
+            </p>
+
+            <h5 className="text-md font-medium text-emerald-400 mt-4">
+              Cookies
+            </h5>
+            <p>
+              We use cookies, and similar technologies such as pixel tags and
+              web beacons (referred to together as “cookies”) to provide
+              functionality and recognize you across different Websites and
+              Services and devices. For more information on our use of cookies,
+              please see our Cookie Policy.
+            </p>
+
+            <h5 className="text-md font-medium text-emerald-400 mt-4">
+              Usage Information
+            </h5>
+            <p>
+              We collect information about customers’ usage of our Websites and
+              Services as needed to provide and support the Websites and
+              Services. Some features of the Services require you to input the
+              data, install software on your endpoint devices, or create a
+              connection to your systems. The Services collect data from your
+              environment to provide your requested Services. When you visit our
+              Websites or Services, our server automatically collects certain
+              browser or device-generated information, which may in some cases
+              constitute Personal Data, including but not limited to:
+            </p>
+            <ul className="list-disc pl-5 space-y-1 mt-2 text-slate-300">
+              <li>
+                Your domain, connection type, device information, and settings
+              </li>
+              <li>
+                Your IP address or other geolocation information, and MAC
+                address
+              </li>
+              <li>
+                Your browser type, operating system, page visits, and site
+                interactions
+              </li>
+              <li>
+                The date, time, and duration of your visit, and internet traffic
+                details (URL requests, ports, and protocols used)
+              </li>
+            </ul>
+
+            <h5 className="text-md font-medium text-emerald-400 mt-4">
+              Applications and Files
+            </h5>
+            <p>
+              The Services may collect information on the existence,
+              characteristics, and behavior of applications, processes, or files
+              on your device. Depending on the Services you subscribe to, a
+              determination on the security status of your applications,
+              processes, or files may be collected from other security
+              applications or services (such as an antivirus service), including
+              whether such activity could be categorized as bad, good,
+              suspicious, or unknown. Additionally, if MyITGuard suspects that
+              an application, process, or file is potentially malicious, we may
+              collect copies of it for purposes of providing the Services and
+              for malware research and analysis.
+            </p>
+
+            <h4 className="text-lg font-semibold text-white mt-6 border-b border-slate-800 pb-1">
               2. How We Use Your Information
             </h4>
-            <p>
-              We use this data exclusively to evaluate your cybersecurity
-              posture, respond to your service requests, and deliver our
-              resources. We never sell your data.
-            </p>
-            <h4 className="text-lg font-semibold text-white mt-4">
-              3. Third-Party Data Transmission
+            <ul className="list-disc pl-5 space-y-1 mt-2 text-slate-300">
+              <li>
+                To provide, maintain, and improve our Websites and Services
+              </li>
+              <li>To manage customer relationships and respond to inquiries</li>
+              <li>To conduct security and compliance assessments</li>
+              <li>To analyze and optimize user experience</li>
+              <li>To detect, prevent, and mitigate cybersecurity threats</li>
+              <li>To comply with legal obligations and enforce our policies</li>
+            </ul>
+
+            <h4 className="text-lg font-semibold text-white mt-6 border-b border-slate-800 pb-1">
+              3. How We Share Your Information
             </h4>
             <p>
-              Contact form submissions are processed securely via EmailJS and
-              routed directly to our internal email infrastructure hosted by
-              Hostinger.
+              We do not sell your Personal Data. However, we may share it with
+              trusted third parties who assist us in delivering our Services,
+              including:
+            </p>
+            <ul className="list-disc pl-5 space-y-1 mt-2 text-slate-300">
+              <li>
+                Service providers and partners that help us operate our business
+              </li>
+              <li>Legal authorities, if required by law</li>
+              <li>Business transfers in case of mergers or acquisitions</li>
+            </ul>
+
+            <h4 className="text-lg font-semibold text-white mt-6 border-b border-slate-800 pb-1">
+              4. Data Retention and Security
+            </h4>
+            <p>
+              We retain your Personal Data for as long as necessary to fulfill
+              the purposes outlined in this policy, comply with legal
+              obligations, resolve disputes, and enforce agreements. We
+              implement appropriate technical and organizational security
+              measures to protect your Personal Data.
+            </p>
+
+            <h4 className="text-lg font-semibold text-white mt-6 border-b border-slate-800 pb-1">
+              5. Your Rights and Choices
+            </h4>
+            <p>Depending on your location, you may have rights to:</p>
+            <ul className="list-disc pl-5 space-y-1 mt-2 text-slate-300">
+              <li>Access, correct, or delete your Personal Data</li>
+              <li>Opt out of certain data processing activities</li>
+              <li>Restrict or object to data processing</li>
+              <li>Lodge a complaint with a data protection authority</li>
+            </ul>
+
+            <h4 className="text-lg font-semibold text-white mt-6 border-b border-slate-800 pb-1">
+              6. Changes to This Privacy Policy
+            </h4>
+            <p>
+              We may update this Privacy Policy from time to time. The updated
+              policy will be posted on our Website with the effective date.
+            </p>
+
+            <h4 className="text-lg font-semibold text-white mt-6 border-b border-slate-800 pb-1">
+              7. Contact Us
+            </h4>
+            <p>
+              If you have any questions about this Privacy Policy, you can
+              contact us at:{" "}
+              <a
+                href="mailto:info@MyITGuard.com"
+                className="text-emerald-400 hover:underline"
+              >
+                info@MyITGuard.com
+              </a>
             </p>
           </PolicyModal>
 
+          {/* 🍪 Official Cookie Policy Modal */}
           <PolicyModal
             isOpen={activePolicy === "cookie"}
             onClose={() => setActivePolicy(null)}
             title="Cookie Policy"
           >
-            <p className="text-xs text-slate-400">Last updated: July 2026</p>
-            <h4 className="text-lg font-semibold text-white mt-4">
+            <p className="text-xs text-slate-400 font-mono">
+              Effective Date: March 15, 2025.
+            </p>
+            <p className="mt-2 text-slate-300">
+              At MyITGuard, we use cookies and similar tracking technologies to
+              improve your experience on our website, analyze traffic, and
+              provide better services. This Cookie Policy explains what cookies
+              are, how we use them, and how you can manage your preferences.
+            </p>
+
+            <h4 className="text-lg font-semibold text-white mt-6 border-b border-slate-800 pb-1">
               1. What Are Cookies?
             </h4>
             <p>
-              Cookies are small text files stored on your device to help
-              websites function efficiently.
+              Cookies are small text files stored on your device (computer,
+              smartphone, or tablet) when you visit a website. They help
+              websites function properly, remember your preferences, and collect
+              analytical data.
             </p>
-            <h4 className="text-lg font-semibold text-white mt-4">
+
+            <h4 className="text-lg font-semibold text-white mt-6 border-b border-slate-800 pb-1">
               2. How We Use Cookies
             </h4>
+            <p>We use cookies for the following purposes:</p>
+            <ul className="list-disc pl-5 space-y-2 mt-2 text-slate-300">
+              <li>
+                <strong className="text-white">Essential Cookies:</strong> These
+                cookies are necessary for the website to function properly, such
+                as enabling navigation and secure access.
+              </li>
+              <li>
+                <strong className="text-white">
+                  Performance & Analytics Cookies:
+                </strong>{" "}
+                These help us understand how visitors interact with our website,
+                so we can improve functionality and content.
+              </li>
+              <li>
+                <strong className="text-white">Functionality Cookies:</strong>{" "}
+                These allow us to remember user preferences, such as language
+                settings or login details, to enhance your experience.
+              </li>
+              <li>
+                <strong className="text-white">
+                  Marketing & Advertising Cookies:
+                </strong>{" "}
+                These cookies track browsing behavior to deliver targeted
+                advertisements and measure ad performance.
+              </li>
+            </ul>
+
+            <h4 className="text-lg font-semibold text-white mt-6 border-b border-slate-800 pb-1">
+              3. Third-Party Cookies
+            </h4>
             <p>
-              This website is a lightweight, static React application. We do not
-              run invasive tracking or advertising cookies. We only use
-              essential, technical cookies required for the safety and
-              performance of the site interface.
+              We may allow third-party services, such as analytics providers
+              (e.g., Google Analytics) and advertising networks, to place
+              cookies on your device. These third-party cookies help us
+              understand website traffic, track conversions, and improve
+              marketing efforts.
+            </p>
+
+            <h4 className="text-lg font-semibold text-white mt-6 border-b border-slate-800 pb-1">
+              4. Managing Cookies
+            </h4>
+            <p>You have control over your cookie preferences. You can:</p>
+            <ul className="list-disc pl-5 space-y-1 mt-2 text-slate-300">
+              <li>Adjust your browser settings to block or delete cookies.</li>
+              <li>
+                Use our website’s cookie consent tool to customize your
+                preferences.
+              </li>
+              <li>
+                Opt-out of third-party tracking through their respective privacy
+                policies.
+              </li>
+            </ul>
+            <p className="mt-2 text-sm text-slate-400 italic">
+              Please note that disabling some cookies may affect website
+              functionality and your user experience.
+            </p>
+
+            <h4 className="text-lg font-semibold text-white mt-6 border-b border-slate-800 pb-1">
+              5. Updates to This Policy
+            </h4>
+            <p>
+              We may update this Cookie Policy periodically to reflect changes
+              in our practices. Any modifications will be posted on this page
+              with an updated “Effective Date.”
+            </p>
+
+            <h4 className="text-lg font-semibold text-white mt-6 border-b border-slate-800 pb-1">
+              6. Contact Us
+            </h4>
+            <p>
+              If you have any questions about this Cookie Policy, please contact
+              us at:{" "}
+              <a
+                href="mailto:info@MyITGuard.com"
+                className="text-emerald-400 hover:underline"
+              >
+                info@MyITGuard.com
+              </a>
             </p>
           </PolicyModal>
           <AppContent />
