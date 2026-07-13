@@ -5013,6 +5013,18 @@ interface FooterProps {
 }
 
 function Footer({ onNavigate, setActivePolicy }: FooterProps) {
+  // Helper to trigger policy state via prop or global window fallback
+  const triggerPolicy = (type: "privacy" | "cookie") => {
+    if (setActivePolicy) {
+      setActivePolicy(type);
+    } else if (
+      typeof window !== "undefined" &&
+      (window as any).setActivePolicy
+    ) {
+      (window as any).setActivePolicy(type);
+    }
+  };
+
   return (
     <footer className="py-16 border-t border-slate-800">
       <div className="max-w-7xl mx-auto px-6">
@@ -5186,7 +5198,7 @@ function Footer({ onNavigate, setActivePolicy }: FooterProps) {
                   href="#privacy"
                   onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
                     e.preventDefault();
-                    if (setActivePolicy) setActivePolicy("privacy");
+                    triggerPolicy("privacy");
                   }}
                   className="hover:text-cyber-green transition-colors"
                 >
@@ -5206,7 +5218,7 @@ function Footer({ onNavigate, setActivePolicy }: FooterProps) {
               href="#privacy"
               onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
                 e.preventDefault();
-                if (setActivePolicy) setActivePolicy("privacy");
+                triggerPolicy("privacy");
               }}
               className="hover:text-cyber-green transition-colors"
             >
@@ -5219,7 +5231,7 @@ function Footer({ onNavigate, setActivePolicy }: FooterProps) {
               href="#cookies"
               onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
                 e.preventDefault();
-                if (setActivePolicy) setActivePolicy("cookie");
+                triggerPolicy("cookie");
               }}
               className="hover:text-cyber-green transition-colors"
             >
