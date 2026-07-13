@@ -5395,10 +5395,10 @@ function AppContent({
       )}
       <Footer onNavigate={handleNavigate} />
     </>
-  );
-}
+        );
+      } // This closes the main AppContent function cleanly
 
-export default function App() {
+      export default function App() {
   const [activePolicy, setActivePolicy] = React.useState<
     "privacy" | "cookie" | null
   >(null);
