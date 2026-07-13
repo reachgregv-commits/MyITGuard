@@ -5218,9 +5218,7 @@ function AppContent({
   const location = useLocation();
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState("home");
-  const [selectedArticle, setSelectedArticle] = useState<BlogArticle | null>(
-    null,
-  );
+  const [selectedArticle, setSelectedArticle] = useState<BlogArticle | null>(null);
   const [selectedService, setSelectedService] = useState<string | null>(null);
 
   // Check localStorage synchronously
@@ -5253,8 +5251,6 @@ function AppContent({
   const handleNavigate = (section: string) => {
     const targetId = section === "roi" ? "roi-calculator" : section;
 
-    // If we're not on the homepage, navigate there first (with the hash),
-    // then let the location.hash effect above scroll to the right section.
     if (location.pathname !== "/") {
       navigate(`/#${targetId}`);
       setActiveSection(section);
@@ -5269,15 +5265,12 @@ function AppContent({
   const handleArticleSelect = (article: BlogArticle) => {
     setSelectedArticle(article);
   };
-
   const handleServiceSelect = (service: string) => {
     setSelectedService(service);
   };
-
   const handleCloseArticle = () => {
     setSelectedArticle(null);
   };
-
   const handleCloseService = () => {
     setSelectedService(null);
   };
@@ -5294,15 +5287,64 @@ function AppContent({
           activeSection={activeSection}
           setActiveSection={setActiveSection}
         />
-        <div
-          style={{ opacity: showIntro ? 0 : 1, transition: "opacity 1s ease" }}
-        >
+        <div style={{ opacity: showIntro ? 0 : 1, transition: "opacity 1s ease" }}>
           <ContactPage />
         </div>
-        <Footer onNavigate={handleNavigate} />
+        {/* Pass state setter to Footer */}
+        <Footer onNavigate={handleNavigate} setActivePolicy={setActivePolicy} />
       </>
     );
   }
+
+  if (location.hash === "#/glossary" || location.pathname === "/glossary") {
+    return (
+      <>
+        {showIntro && <HyperspaceIntro onComplete={handleIntroComplete} />}
+        <Navigation
+          activeSection={activeSection}
+          setActiveSection={setActiveSection}
+        />
+        <div style={{ opacity: showIntro ? 0 : 1, transition: "opacity 1s ease" }}>
+          <ThreatGlossary />
+        </div>
+        {/* Pass state setter to Footer */}
+        <Footer onNavigate={handleNavigate} setActivePolicy={setActivePolicy} />
+      </>
+    );
+  }
+
+  // Homepage with all sections
+  return (
+    <>
+      {showIntro && <HyperspaceIntro onComplete={handleIntroComplete} />}
+      <Navigation
+        activeSection={activeSection}
+        setActiveSection={setActiveSection}
+      />
+      <main style={{ opacity: showIntro ? 0 : 1, transition: "opacity 1s ease" }}>
+        <HeroSection onNavigate={handleNavigate} />
+        <ServicesSection onServiceSelect={handleServiceSelect} />
+        <ResourcesSection />
+        <PlansSection />
+        <TestimonialsSection />
+        <BlogSection onArticleSelect={handleArticleSelect} />
+        <AboutSection />
+        <ContactSection />
+      </main>
+      {selectedArticle && (
+        <ArticleModal article={selectedArticle} onClose={handleCloseArticle} />
+      )}
+      {selectedService && (
+        <ServiceModal
+          serviceName={selectedService}
+          onClose={handleCloseService}
+        />
+      )}
+      {/* Pass state setter to Footer */}
+      <Footer onNavigate={handleNavigate} setActivePolicy={setActivePolicy} />
+    </>
+  );
+}
 
   if (location.hash === "#/glossary" || location.pathname === "/glossary") {
     return (
@@ -5360,8 +5402,10 @@ export default function App() {
   const [activePolicy, setActivePolicy] = React.useState<
     "privacy" | "cookie" | null
   >(null);
-  // This exposes the setter globally to the entire application
+
+  // This exposes the setter globally to the entire application as a fallback
   (window as any).setActivePolicy = setActivePolicy;
+
   return (
     <Router>
       <HelmetProvider>
@@ -5376,11 +5420,11 @@ export default function App() {
               content="MyITGuard provides Virtual CISO services, HIPAA/SOC 2/CMMC compliance, cyber risk assessments, and security awareness training."
             />
           </Helmet>
-          {/* 2. Pass down the state setter so your footer buttons inside AppContent can open them */}
+
+          {/* 1. Pass down state setter */}
           <AppContent setActivePolicy={setActivePolicy} />
 
-          {/* 3. The Modals sit here at the root level */}
-          {/* Official Privacy Policy Modal */}
+          {/* 2. Official Privacy Policy Modal */}
           <PolicyModal
             isOpen={activePolicy === "privacy"}
             onClose={() => setActivePolicy(null)}
@@ -5611,7 +5655,7 @@ export default function App() {
             </p>
           </PolicyModal>
 
-          {/* 🍪 Official Cookie Policy Modal */}
+          {/* 3. Official Cookie Policy Modal */}
           <PolicyModal
             isOpen={activePolicy === "cookie"}
             onClose={() => setActivePolicy(null)}
@@ -5722,7 +5766,8 @@ export default function App() {
               </a>
             </p>
           </PolicyModal>
-          <AppContent />
+
+          {/* Duplicate AppContent removal successful */}
         </div>
       </HelmetProvider>
     </Router>
