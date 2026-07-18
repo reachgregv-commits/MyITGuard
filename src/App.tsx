@@ -5013,14 +5013,12 @@ interface FooterProps {
 }
 
 function Footer({ onNavigate, setActivePolicy }: FooterProps) {
+  // FORCE it to use the working global window setter that just passed our debug test
   const triggerPolicy = (type: "privacy" | "cookie") => {
-    if (setActivePolicy) {
-      setActivePolicy(type);
-    } else if (
-      typeof window !== "undefined" &&
-      (window as any).setActivePolicy
-    ) {
+    if (typeof window !== "undefined" && (window as any).setActivePolicy) {
       (window as any).setActivePolicy(type);
+    } else if (setActivePolicy) {
+      setActivePolicy(type);
     }
   };
 
@@ -5038,18 +5036,6 @@ function Footer({ onNavigate, setActivePolicy }: FooterProps) {
             <p className="text-slate-400 mb-4">
               Enterprise cybersecurity solutions for the modern business.
             </p>
-            <div className="flex gap-4">
-              {["twitter", "linkedin", "github"].map((social) => (
-                <a
-                  key={social}
-                  href="#"
-                  className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center hover:bg-cyber-green/20 transition-all"
-                  style={{ color: "#00ff88" }}
-                >
-                  <Globe className="w-5 h-5" />
-                </a>
-              ))}
-            </div>
           </div>
           <div>
             <h4 className="font-semibold mb-4">Services</h4>
@@ -5144,14 +5130,7 @@ function Footer({ onNavigate, setActivePolicy }: FooterProps) {
                   Contact
                 </button>
               </li>
-              <li>
-                <a
-                  href="#"
-                  className="hover:text-cyber-green transition-colors"
-                >
-                  Careers
-                </a>
-              </li>
+
               <li>
                 <button
                   onClick={() => triggerPolicy("privacy")}
@@ -5175,9 +5154,12 @@ function Footer({ onNavigate, setActivePolicy }: FooterProps) {
             >
               Privacy Policy
             </button>
-            <a href="#" className="hover:text-cyber-green transition-colors">
+            <button
+              onClick={() => triggerPolicy("terms" as any)}
+              className="hover:text-cyber-green transition-colors bg-transparent border-none p-0 cursor-pointer text-sm text-slate-500"
+            >
               Terms of Service
-            </a>
+            </button>
             <button
               onClick={() => triggerPolicy("cookie")}
               className="hover:text-cyber-green transition-colors bg-transparent border-none p-0 cursor-pointer"
@@ -5337,7 +5319,7 @@ function AppContent({
 } // This closes the main AppContent function cleanly
 export default function App() {
   const [activePolicy, setActivePolicy] = React.useState<
-    "privacy" | "cookie" | null
+    "privacy" | "cookie" | "terms" | null
   >(null);
 
   // This exposes the setter globally to the entire application as a fallback
@@ -5701,6 +5683,96 @@ export default function App() {
               >
                 info@MyITGuard.com
               </a>
+            </p>
+          </PolicyModal>
+
+          {/* 4. Official Terms of Service Modal */}
+          <PolicyModal
+            isOpen={activePolicy === "terms"}
+            onClose={() => setActivePolicy(null)}
+            title="Terms of Service"
+          >
+            <p className="text-xs text-slate-400 font-mono">
+              Effective Date: March 15, 2025.
+            </p>
+            <p className="mt-2 text-slate-300">
+              Welcome to MyITGuard. Please read these Terms of Service (“Terms”,
+              “Agreement”) carefully before using our website, platform, and
+              enterprise cybersecurity services (collectively, the “Service”)
+              operated by MyITGuard (“us”, “we”, or “our”).
+            </p>
+            <p className="mt-2 text-slate-300">
+              By accessing or using the Service, you agree to be bound by these
+              Terms. If you disagree with any part of the terms, you do not have
+              permission to access the Service.
+            </p>
+
+            <h4 className="text-lg font-semibold text-white mt-6 border-b border-slate-800 pb-1">
+              1. Scope of Enterprise Services
+            </h4>
+            <p className="mt-2 text-slate-300">
+              MyITGuard provides advanced enterprise cybersecurity solutions,
+              including Virtual CISO consulting, HIPAA/SOC 2/CMMC compliance
+              preparation, risk assessments, and security awareness training.
+              These Services are designed to support and enhance your corporate
+              security posture; however, they do not guarantee absolute immunity
+              from sophisticated cyber threats or zero-day exploits.
+            </p>
+
+            <h4 className="text-lg font-semibold text-white mt-6 border-b border-slate-800 pb-1">
+              2. Client Obligations & Security Hygiene
+            </h4>
+            <p className="mt-2 text-slate-300">
+              To deliver effective cybersecurity protections, you agree to
+              provide timely, accurate system infrastructure data and maintain
+              foundational operational controls. You are responsible for
+              ensuring that your staff complies with corporate security policies
+              and training frameworks established during our engagement.
+            </p>
+
+            <h4 className="text-lg font-semibold text-white mt-6 border-b border-slate-800 pb-1">
+              3. Intellectual Property Rights
+            </h4>
+            <p className="mt-2 text-slate-300">
+              The Service and its original content, features, custom dashboards,
+              interactive tool architectures, and functionality remain the
+              exclusive property of MyITGuard and its licensors. Our corporate
+              assets, layout design elements, and logos may not be used in
+              connection with any product or service without our prior written
+              consent.
+            </p>
+
+            <h4 className="text-lg font-semibold text-white mt-6 border-b border-slate-800 pb-1">
+              4. Limitation of Liability
+            </h4>
+            <p className="mt-2 text-slate-300">
+              In no event shall MyITGuard, nor its directors, employees, or
+              partners, be liable for any indirect, incidental, special,
+              consequential, or punitive damages—including without limitation,
+              loss of corporate profits, data corruption, proprietary system
+              downtime, or business interruption—resulting from your access to
+              or inability to utilize our specialized security suites.
+            </p>
+
+            <h4 className="text-lg font-semibold text-white mt-6 border-b border-slate-800 pb-1">
+              5. Governing Law
+            </h4>
+            <p className="mt-2 text-slate-300">
+              These Terms shall be governed and construed in accordance with the
+              laws of the United States, without regard to its conflict of law
+              provisions. Our failure to enforce any right or provision of these
+              Terms will not be considered a waiver of those rights.
+            </p>
+
+            <h4 className="text-lg font-semibold text-white mt-6 border-b border-slate-800 pb-1">
+              6. Modifications to Terms
+            </h4>
+            <p className="mt-2 text-slate-300">
+              We reserve the right, at our sole discretion, to modify or replace
+              these Terms at any time. If a revision is material, we will
+              provide at least 30 days' notice prior to any new terms taking
+              effect. What constitutes a material change will be determined at
+              our sole discretion.
             </p>
           </PolicyModal>
 
