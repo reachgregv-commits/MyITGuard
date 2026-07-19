@@ -1,15 +1,20 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   motion,
   useScroll,
   useTransform,
   AnimatePresence,
+  useMotionValue,
+  useSpring,
 } from "framer-motion";
 import {
   Shield,
+  Compass,
   Lock,
   Users,
   FileCheck,
+  Eye,
+  Target,
   AlertTriangle,
   ChevronRight,
   Menu,
@@ -31,6 +36,9 @@ import {
   Tag,
   ArrowLeft,
   Share2,
+  Send,
+  ShieldAlert,
+  ShieldCheck,
 } from "lucide-react";
 import { HelmetProvider, Helmet } from "react-helmet-async";
 import {
@@ -4670,104 +4678,537 @@ function TestimonialsSection() {
   );
 }
 
-// About Section
+// GLOBAL CONSTANTS, INTERFACES, & UTILITIES
+const SERVICES = [
+  "Cloud",
+  "Endpoint",
+  "Identity",
+  "Network",
+  "SOC",
+  "Compliance",
+  "Firewall",
+  "Email",
+  "Devices",
+  "Users",
+  "Apps",
+  "Data",
+  "XDR",
+  "SIEM",
+  "MDR",
+  "Patch",
+  "MFA",
+  "Backup",
+  "VPN",
+  "Database",
+];
+
+const HEX_R = 42;
+const COLS = 6;
+const ROWS = 4;
+
+interface Cell {
+  x: number;
+  y: number;
+  col: number;
+  row: number;
+  label: string;
+  state: "idle" | "threat" | "neutralized";
+  pulse: number;
+  pulseSpeed: number;
+  threatTimer: number;
+  scale: number;
+}
+
+interface RippleOrigin {
+  x: number;
+  y: number;
+}
+
+function drawHexPath(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  r: number,
+) {
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const a = (Math.PI / 180) * (60 * i - 30);
+    const px = cx + r * Math.cos(a);
+    const py = cy + r * Math.sin(a);
+    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+}
+
 function AboutSection() {
-  const features = [
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const cellsRef = useRef<Cell[]>([]);
+  const rippleRef = useRef<{
+    origin: RippleOrigin | null;
+    r: number;
+    alpha: number;
+  }>({
+    origin: null,
+    r: 0,
+    alpha: 0,
+  });
+  const scanAngleRef = useRef(0);
+  const timeRef = useRef(0);
+  const rafRef = useRef<number>(0);
+  const threatTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rippleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const trustFactors = [
+    {
+      icon: <Target className="w-6 h-6" />,
+      title: "Our Mission",
+      description:
+        "To protect businesses in the digital world through expert cybersecurity solutions delivered with unwavering integrity.",
+    },
+    {
+      icon: <Eye className="w-6 h-6" />,
+      title: "Our Vision",
+      description:
+        "A future where businesses can operate safely without fear of cyber threats, backed by dedicated compliance expertise.",
+    },
     {
       icon: <Award className="w-6 h-6" />,
       title: "Certified Experts",
-      description: "CISSP, CISM, CEH certified",
+      description:
+        "Our security infrastructure teams hold globally recognized certifications across risk governance.",
     },
     {
       icon: <Clock className="w-6 h-6" />,
       title: "24/7 Support",
-      description: "Round-the-clock monitoring",
+      description:
+        "Continuous, round-the-clock monitoring and rapid incident response to isolate anomalies before they impact operations.",
     },
     {
-      icon: <Globe className="w-6 h-6" />,
+      icon: <ShieldAlert className="w-6 h-6" />,
       title: "Global Threat Intel",
-      description: "Real-time intelligence feeds",
+      description:
+        "Leveraging proactive, real-time intelligence feeds to detect, analyze, and neutralize zero-day vectors instantly.",
     },
     {
-      icon: <Shield className="w-6 h-6" />,
-      title: "Proven Track Record",
-      description: "500+ clients protected",
+      icon: <Users className="w-6 h-6" />,
+      title: "Proven Team",
+      description:
+        "Strategic leadership and deep technical engineering working seamlessly alongside your operations.",
     },
   ];
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const W = canvas.width;
+    const H = canvas.height;
+
+    const COLORS = {
+      bg: "transparent",
+      cyan: "#22d3ee",
+      green: "#34d399",
+      red: "#f43f5e",
+      borderIdle: "#1e293b",
+      textMuted: "#64748b",
+    };
+
+    function getHexCenter(col: number, row: number, currentW: number) {
+      const w = HEX_R * Math.sqrt(3);
+      const h = HEX_R * 2;
+      const ox = currentW / 2 - ((COLS - 1) * w) / 2;
+      const oy = 64;
+      const x = ox + col * w + (row % 2 === 1 ? w / 2 : 0);
+      const y = oy + row * h * 0.75;
+      return { x, y };
+    }
+
+    const cells: Cell[] = [];
+    let idx = 0;
+    for (let row = 0; row < ROWS; row++) {
+      for (let col = 0; col < COLS; col++) {
+        if (row % 2 === 1 && col === COLS - 1) continue;
+        const { x, y } = getHexCenter(col, row, W);
+        cells.push({
+          x,
+          y,
+          col,
+          row,
+          label: SERVICES[idx % SERVICES.length],
+          state: "idle",
+          pulse: Math.random() * Math.PI * 2,
+          pulseSpeed: 0.012 + Math.random() * 0.008,
+          threatTimer: 0,
+          scale: 1.0,
+        });
+        idx++;
+      }
+    }
+    cellsRef.current = cells;
+
+    function scheduleThreat() {
+      const delay = 2500 + Math.random() * 3000;
+      threatTimerRef.current = setTimeout(() => {
+        const idle = cellsRef.current.filter((c) => c.state === "idle");
+        if (idle.length > 0) {
+          const target = idle[Math.floor(Math.random() * idle.length)];
+          target.state = "threat";
+          target.threatTimer = 0;
+        }
+        scheduleThreat();
+      }, delay);
+    }
+
+    function scheduleRipple() {
+      const delay = 5000 + Math.random() * 4000;
+      rippleTimerRef.current = setTimeout(() => {
+        if (cellsRef.current.length > 0) {
+          const src =
+            cellsRef.current[
+              Math.floor(Math.random() * cellsRef.current.length)
+            ];
+          rippleRef.current = {
+            origin: { x: src.x, y: src.y },
+            r: 0,
+            alpha: 0.6,
+          };
+        }
+        scheduleRipple();
+      }, delay);
+    }
+
+    scheduleThreat();
+    scheduleRipple();
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+
+      timeRef.current += 0.016;
+      scanAngleRef.current += 0.004;
+      const time = timeRef.current;
+      const scanAngle = scanAngleRef.current;
+
+      const ripple = rippleRef.current;
+      if (ripple.origin && ripple.alpha > 0) {
+        ripple.r += 2.2;
+        ripple.alpha -= 0.008;
+        ctx.beginPath();
+        ctx.arc(ripple.origin.x, ripple.origin.y, ripple.r, 0, Math.PI * 2);
+        ctx.strokeStyle = COLORS.cyan;
+        ctx.globalAlpha = Math.max(0, ripple.alpha * 0.35);
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        if (ripple.alpha <= 0) ripple.origin = null;
+      }
+
+      cellsRef.current.forEach((cell, i) => {
+        cell.pulse += cell.pulseSpeed;
+
+        const angleToCell = Math.atan2(cell.y - H / 2, cell.x - W / 2);
+        let angleDiff =
+          (((scanAngle - angleToCell) % (Math.PI * 2)) + Math.PI * 2) %
+          (Math.PI * 2);
+        if (angleDiff > Math.PI) angleDiff = Math.PI * 2 - angleDiff;
+        const scanHighlight = Math.max(0, 1 - angleDiff / 0.7);
+
+        if (cell.state === "threat") {
+          cell.threatTimer += 0.018;
+          cell.scale += (1.35 - cell.scale) * 0.14;
+
+          if (cell.threatTimer > 2.2) {
+            cell.state = "neutralized";
+            cell.threatTimer = 0;
+            rippleRef.current = {
+              origin: { x: cell.x, y: cell.y },
+              r: 0,
+              alpha: 0.7,
+            };
+          }
+        } else if (cell.state === "neutralized") {
+          cell.threatTimer += 0.014;
+          cell.scale += (1.2 - cell.scale) * 0.1;
+
+          if (cell.threatTimer > 2.5) {
+            cell.state = "idle";
+            cell.threatTimer = 0;
+          }
+        } else {
+          cell.scale += (1.0 - cell.scale) * 0.12;
+        }
+
+        const rCurrent = HEX_R * cell.scale;
+        let strokeColor: string, fillColor: string, labelColor: string;
+
+        if (cell.state === "threat") {
+          const flicker = 0.5 + 0.5 * Math.sin(time * 14 + i);
+          strokeColor = COLORS.red;
+          fillColor = `rgba(244,63,94,${0.09 + 0.11 * flicker})`;
+          labelColor = COLORS.red;
+        } else if (cell.state === "neutralized") {
+          strokeColor = COLORS.green;
+          fillColor = `rgba(52,211,153,${0.08 + 0.05 * Math.sin(cell.pulse)})`;
+          labelColor = COLORS.green;
+        } else {
+          const fillA =
+            0.02 + 0.02 * Math.sin(cell.pulse) + scanHighlight * 0.08;
+          strokeColor = scanHighlight > 0.3 ? COLORS.cyan : COLORS.borderIdle;
+          fillColor = `rgba(34,211,238,${fillA})`;
+          labelColor = scanHighlight > 0.3 ? COLORS.cyan : COLORS.textMuted;
+        }
+
+        if (cell.scale > 1.01) {
+          ctx.save();
+          const elevationOffset = (cell.scale - 1) * 45;
+          const dynamicBlur = 6 + (cell.scale - 1) * 40;
+
+          drawHexPath(ctx, cell.x, cell.y + elevationOffset, rCurrent);
+          ctx.fillStyle = "rgba(1, 3, 12, 0.55)";
+          ctx.filter = `blur(${Math.min(18, dynamicBlur)}px)`;
+          ctx.fill();
+          ctx.restore();
+        }
+
+        if (cell.state !== "idle" || scanHighlight > 0.5) {
+          drawHexPath(ctx, cell.x, cell.y, rCurrent + 5);
+          ctx.strokeStyle =
+            cell.state === "threat"
+              ? COLORS.red
+              : cell.state === "neutralized"
+                ? COLORS.green
+                : COLORS.cyan;
+          ctx.globalAlpha =
+            cell.state === "threat"
+              ? 0.3 + 0.25 * Math.sin(time * 12 + i)
+              : cell.state === "neutralized"
+                ? 0.22
+                : scanHighlight * 0.15;
+          ctx.lineWidth = cell.state !== "idle" ? 4 : 2;
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+        }
+
+        drawHexPath(ctx, cell.x, cell.y, rCurrent - 2);
+        ctx.fillStyle = fillColor;
+        ctx.fill();
+
+        drawHexPath(ctx, cell.x, cell.y, rCurrent - 1);
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = cell.state !== "idle" ? 2 : 1;
+        ctx.globalAlpha =
+          cell.state !== "idle" ? 1.0 : 0.2 + scanHighlight * 0.5;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        drawHexPath(ctx, cell.x, cell.y, rCurrent * 0.65);
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = 0.5;
+        ctx.globalAlpha =
+          cell.state !== "idle" ? 0.3 : 0.07 + scanHighlight * 0.1;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        const fontWeight = cell.state !== "idle" ? "700" : "500";
+        ctx.font = `${fontWeight} ${Math.floor(11.5 * cell.scale)}px monospace`;
+        ctx.textAlign = "center";
+        ctx.fillStyle = labelColor;
+        ctx.globalAlpha =
+          cell.state !== "idle" ? 1 : 0.35 + scanHighlight * 0.55;
+        ctx.fillText(cell.label, cell.x, cell.y + 4);
+        ctx.globalAlpha = 1;
+
+        if (cell.state === "threat") {
+          ctx.beginPath();
+          ctx.arc(
+            cell.x,
+            cell.y - 16 * cell.scale,
+            4.5 * cell.scale,
+            0,
+            Math.PI * 2,
+          );
+          ctx.fillStyle = COLORS.red;
+          ctx.globalAlpha = 0.7 + 0.3 * Math.sin(time * 10 + i);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+        } else if (cell.state === "neutralized") {
+          ctx.beginPath();
+          ctx.moveTo(cell.x - 8 * cell.scale, cell.y - 14 * cell.scale);
+          ctx.lineTo(cell.x - 2 * cell.scale, cell.y - 8 * cell.scale);
+          ctx.lineTo(cell.x + 9 * cell.scale, cell.y - 22 * cell.scale);
+          ctx.strokeStyle = COLORS.green;
+          ctx.lineWidth = 2.5 * cell.scale;
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+          ctx.globalAlpha = 0.95;
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+        }
+      });
+
+      const corners: [number, number, string][] = [
+        [16, 16, "tl"],
+        [W - 16, 16, "tr"],
+        [16, H - 16, "bl"],
+        [W - 16, H - 16, "br"],
+      ];
+      corners.forEach(([cx, cy, pos]) => {
+        ctx.strokeStyle = COLORS.cyan;
+        ctx.lineWidth = 1.5;
+        ctx.globalAlpha = 0.35;
+        ctx.beginPath();
+        const s = 14;
+        if (pos === "tl") {
+          ctx.moveTo(cx, cy + s);
+          ctx.lineTo(cx, cy);
+          ctx.lineTo(cx + s, cy);
+        }
+        if (pos === "tr") {
+          ctx.moveTo(cx - s, cy);
+          ctx.lineTo(cx, cy);
+          ctx.lineTo(cx, cy + s);
+        }
+        if (pos === "bl") {
+          ctx.moveTo(cx, cy - s);
+          ctx.lineTo(cx, cy);
+          ctx.lineTo(cx + s, cy);
+        }
+        if (pos === "br") {
+          ctx.moveTo(cx - s, cy);
+          ctx.lineTo(cx, cy);
+          ctx.lineTo(cx, cy - s);
+        }
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      });
+
+      const threatCount = cellsRef.current.filter(
+        (c) => c.state === "threat",
+      ).length;
+      ctx.font = "10px monospace";
+      ctx.textAlign = "left";
+      ctx.fillStyle = threatCount > 0 ? COLORS.red : COLORS.green;
+      ctx.globalAlpha = 0.7;
+      ctx.fillText(
+        threatCount > 0
+          ? `▲ ${threatCount} THREAT${threatCount > 1 ? "S" : ""} DETECTED`
+          : "● ALL SYSTEMS SECURE",
+        24,
+        H - 18,
+      );
+      ctx.textAlign = "right";
+      ctx.fillStyle = COLORS.cyan;
+      ctx.fillText("MYITGUARD · ACTIVE MONITORING", W - 24, H - 18);
+      ctx.globalAlpha = 1;
+
+      rafRef.current = requestAnimationFrame(draw);
+    }
+
+    draw();
+
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      if (threatTimerRef.current) clearTimeout(threatTimerRef.current);
+      if (rippleTimerRef.current) clearTimeout(rippleTimerRef.current);
+    };
+  }, []);
+
   return (
-    <section id="about" className="py-24 relative">
+    <section
+      id="about"
+      className="py-24 relative font-sans overflow-hidden bg-transparent text-white"
+    >
       <div className="max-w-7xl mx-auto px-6">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
+        {/* Top Split Block */}
+        <div className="grid lg:grid-cols-12 gap-12 items-center mb-20">
+          {/* Left Block */}
           <motion.div
-            initial={{ opacity: 0, x: -50 }}
+            className="lg:col-span-7"
+            initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            <div className="inline-flex items-center gap-2 badge-blue mb-4">
-              <Award className="w-4 h-4" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 text-xs font-medium rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-4">
+              <Award className="w-3.5 h-3.5" />
               <span>About MyITGuard</span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              Your Trusted Partner in{" "}
-              <span className="gradient-text-blue">Cybersecurity</span>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight leading-tight">
+              Your Trusted Cybersecurity Partner{" "}
+              <span className="bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">
+                MyITGuard
+              </span>
             </h2>
-            <p className="text-xl text-slate-300 mb-6">
-              MyITGuard delivers enterprise-grade cybersecurity solutions
-              tailored for businesses of all sizes. Our team combines strategic
-              leadership with technical excellence.
+            <p className="text-lg text-slate-300 leading-relaxed max-w-3xl">
+              We take a personalized approach to cybersecurity, treating your
+              business as if it were our own. We don't just protect data—we
+              safeguard every byte with tailored security solutions designed to
+              meet your unique needs. MyITGuard delivers enterprise-grade
+              cybersecurity solutions tailored for businesses of all sizes. Our
+              team combines strategic leadership with technical excellence.
             </p>
-            <p className="text-slate-400 mb-8">
-              From Virtual CISO services to compliance management and security
-              training, we provide comprehensive protection.
-            </p>
-            <div className="grid grid-cols-2 gap-4">
-              {features.map((feature, index) => (
-                <motion.div
-                  key={index}
-                  className="glass-card p-4"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                >
-                  <div className="mb-2" style={{ color: "#00d4ff" }}>
-                    {feature.icon}
-                  </div>
-                  <h4 className="font-semibold mb-1">{feature.title}</h4>
-                  <p className="text-sm text-slate-400">
-                    {feature.description}
-                  </p>
-                </motion.div>
-              ))}
-            </div>
           </motion.div>
+
+          {/* Right Block (Canvas Widget) */}
           <motion.div
-            className="relative"
-            initial={{ opacity: 0, x: 50 }}
+            className="lg:col-span-5 flex justify-center relative min-h-[440px] items-center w-full"
+            initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            <div className="w-80 h-80 mx-auto relative">
-              <motion.div
-                className="absolute inset-0 flex items-center justify-center"
-                initial={{ scale: 0.8 }}
-                whileInView={{ scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 1 }}
-              >
-                <Shield className="w-40 h-40" style={{ color: "#00ff88" }} />
-              </motion.div>
+            <div className="relative overflow-hidden rounded-xl border border-slate-800/80 bg-slate-900/50 p-2 backdrop-blur-md w-full max-w-[520px] shadow-2xl shadow-cyan-950/20">
+              <canvas
+                ref={canvasRef}
+                width={600}
+                height={440}
+                className="w-full h-auto block rounded-lg bg-slate-950/20"
+              />
             </div>
           </motion.div>
         </div>
+
+        {/* Bottom Split Block */}
+        <motion.div
+          className="border-t border-slate-800/80 pt-16"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {trustFactors.map((factor, index) => (
+              <motion.div
+                key={index}
+                className="glass-card service-card relative overflow-hidden rounded-xl p-6 flex flex-col justify-between transition-all duration-300"
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: index * 0.05 }}
+              >
+                {/* Visual Glow Effect Behind Cards on Hover */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-b from-cyan-500/5 to-transparent pointer-events-none" />
+
+                <div>
+                  <div className="mb-4 text-cyan-400 group-hover:text-cyan-300 transition-colors duration-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.2)]">
+                    {factor.icon}
+                  </div>
+                  <h5 className="font-bold mb-2.5 text-white text-base tracking-tight group-hover:text-cyan-100 transition-colors duration-200">
+                    {factor.title}
+                  </h5>
+                  <p className="text-sm text-slate-400 leading-relaxed group-hover:text-slate-300 transition-colors duration-200">
+                    {factor.description}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
       </div>
     </section>
   );
 }
-
-// Contact Section
 function ContactSection() {
   const [formData, setFormData] = useState({
     name: "",
@@ -4778,23 +5219,31 @@ function ContactSection() {
     message: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    // 1. Paste your exact keys from the EmailJS dashboard inside these single quotes:
     const SERVICE_ID = "service_vi0p04d";
     const TEMPLATE_ID = "template_s8897th";
     const PUBLIC_KEY = "aa3rg1srHmLVgN7wW";
 
-    // 2. Send the form data to EmailJS
-    emailjs
-      .sendForm(SERVICE_ID, TEMPLATE_ID, e.currentTarget, PUBLIC_KEY)
-      .then(() => {
-        // This only runs if the email successfully sent!
-        setSubmitted(true);
+    const templateParams = {
+      from_name: formData.name,
+      reply_to: formData.email,
+      phone_number: formData.phone,
+      company_name: formData.company,
+      service_requested: formData.service,
+      message_details: formData.message,
+    };
 
-        // Clear the form fields after 3 seconds
+    emailjs
+      .send(SERVICE_ID, TEMPLATE_ID, templateParams, PUBLIC_KEY)
+      .then(() => {
+        setSubmitted(true);
+        setIsSubmitting(false);
+
         setTimeout(() => {
           setSubmitted(false);
           setFormData({
@@ -4808,7 +5257,7 @@ function ContactSection() {
         }, 3000);
       })
       .catch((error) => {
-        // This runs if Hostinger SMTP or EmailJS has an error
+        setIsSubmitting(false);
         alert(
           "Something went wrong. Please try again or email us directly at info@myitguard.com",
         );
@@ -4816,98 +5265,201 @@ function ContactSection() {
       });
   };
 
+  const contactDetails = [
+    {
+      icon: <Phone className="w-5 h-5 text-emerald-400" />,
+      label: "Telephone",
+      value: "+1 (240) 729-0299",
+      href: "tel:+12407290299",
+    },
+    {
+      icon: <Mail className="w-5 h-5 text-emerald-400" />,
+      label: "Secure Email",
+      value: "info@myitguard.com",
+      href: "mailto:info@myitguard.com",
+    },
+    {
+      icon: <Clock className="w-5 h-5 text-emerald-400" />,
+      label: "Office Hours",
+      value: "Mon - Fri: 8:00 AM - 6:00 PM EST",
+      href: null,
+    },
+  ];
+
+  // Identical shared Tailwind classes for true visual continuity
+  const glassCardClass =
+    "flex flex-col justify-between h-full bg-slate-900/40 border border-slate-800/80 rounded-2xl p-8 lg:p-10 backdrop-blur-md shadow-xl transition-all duration-300 hover:border-emerald-500/30 hover:shadow-[0_0_25px_rgba(52,211,153,0.05)]";
+
   return (
-    <section id="contact" className="py-24 relative bg-slate-900/50">
-      <div className="max-w-7xl mx-auto px-6">
-        <motion.div
-          className="text-center mb-16"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-        >
-          <div className="inline-flex items-center gap-2 badge-cyber mb-4">
-            <Mail className="w-4 h-4" />
-            <span>Get In Touch</span>
+    <section
+      id="contact"
+      className="py-24 relative font-sans overflow-hidden bg-slate-900/50 text-white border-t border-slate-900/60"
+    >
+      {/* Background Accent Grid */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b10_1px,transparent_1px),linear-gradient(to_bottom,#1e293b10_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
+        {/* Section Header */}
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <div className="inline-flex items-center gap-2 px-3 py-1 text-xs font-medium rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-4">
+            <ShieldCheck className="w-4 h-4" />
+            <span>Secure Terminal Gateway</span>
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">
             Start Your <span className="gradient-text">Security Journey</span>
           </h2>
           <p className="text-xl text-slate-300 max-w-3xl mx-auto">
             Ready to strengthen your cybersecurity posture? Contact us for a
-            free consultation and risk assessment.
+            free consultation and systemic risk analysis.
           </p>
-        </motion.div>
-        <div className="grid lg:grid-cols-2 gap-12">
+        </div>
+
+        {/* Layout Grid */}
+        <div className="grid lg:grid-cols-2 gap-12 items-stretch">
+          {/* Left Column: Contact Parameters Glass Card */}
           <motion.div
-            initial={{ opacity: 0, x: -50 }}
+            className={glassCardClass}
+            initial={{ opacity: 0, x: -40 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.7 }}
           >
-            <div className="glass-card p-8">
-              <h3 className="text-2xl font-bold mb-6">
-                Schedule Your Consultation
+            <div>
+              <h3 className="text-2xl font-bold tracking-tight mb-4 text-white">
+                Contact Us
               </h3>
-              {!submitted ? (
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid md:grid-cols-2 gap-4">
+              <p className="text-slate-400 mb-8 leading-relaxed">
+                Have specific implementation requirements or operational
+                auditing deadlines approaching? Reach out to interface directly
+                with an advisor.
+              </p>
+
+              <div className="space-y-6">
+                {contactDetails.map((item, idx) => (
+                  <div key={idx} className="flex items-start gap-4">
+                    <div className="p-3 rounded-xl bg-slate-900/50 border border-slate-800/60 mt-0.5 shadow-inner">
+                      {item.icon}
+                    </div>
+                    <div>
+                      <span className="block text-xs font-mono text-slate-500 uppercase tracking-wider mb-0.5">
+                        {item.label}
+                      </span>
+                      {item.href ? (
+                        <a
+                          href={item.href}
+                          className="text-slate-200 font-medium hover:text-emerald-400 transition-colors duration-200"
+                        >
+                          {item.value}
+                        </a>
+                      ) : (
+                        <span className="text-slate-300 font-medium">
+                          {item.value}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-12 pt-6 border-t border-slate-900/60 flex items-center gap-3">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-xs font-mono text-slate-400 tracking-wider">
+                COMMUNICATION FLOWWAYS: SECURE & ON-LINE
+              </span>
+            </div>
+          </motion.div>
+
+          {/* Right Column: Interaction Form Glass Card */}
+          <motion.div
+            className={`${glassCardClass} relative min-h-[550px] justify-center`}
+            initial={{ opacity: 0, x: 40 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+          >
+            {!submitted ? (
+              <form onSubmit={handleSubmit} className="space-y-5 w-full">
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-2">
+                      Full Name
+                    </label>
                     <input
                       type="text"
-                      name="name" // 👈 Added for EmailJS {{name}}
+                      required
                       value={formData.name}
                       onChange={(e) =>
                         setFormData({ ...formData, name: e.target.value })
                       }
-                      placeholder="Full Name"
-                      className="input-dark w-full"
-                      required
+                      className="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-700 focus:outline-none focus:border-emerald-500/80 focus:ring-1 focus:ring-emerald-500/30 transition-all duration-200"
+                      placeholder="Jane Doe"
                     />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-2">
+                      Work Email
+                    </label>
                     <input
                       type="email"
-                      name="email" // 👈 Added for EmailJS {{email}}
+                      required
                       value={formData.email}
                       onChange={(e) =>
                         setFormData({ ...formData, email: e.target.value })
                       }
-                      placeholder="Work Email"
-                      className="input-dark w-full"
-                      required
+                      className="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-700 focus:outline-none focus:border-emerald-500/80 focus:ring-1 focus:ring-emerald-500/30 transition-all duration-200"
+                      placeholder="jane@company.com"
                     />
                   </div>
-                  <div className="grid md:grid-cols-2 gap-4">
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-2">
+                      Phone Number
+                    </label>
                     <input
                       type="tel"
-                      name="phone" // 👈 Added for EmailJS {{phone}}
                       value={formData.phone}
                       onChange={(e) =>
                         setFormData({ ...formData, phone: e.target.value })
                       }
-                      placeholder="Phone Number"
-                      className="input-dark w-full"
+                      className="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-700 focus:outline-none focus:border-emerald-500/80 focus:ring-1 focus:ring-emerald-500/30 transition-all duration-200"
+                      placeholder="+1 (555) 000-0000"
                     />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-2">
+                      Company Name
+                    </label>
                     <input
                       type="text"
-                      name="company" // 👈 Added for EmailJS {{company}}
+                      required
                       value={formData.company}
                       onChange={(e) =>
                         setFormData({ ...formData, company: e.target.value })
                       }
-                      placeholder="Company Name"
-                      className="input-dark w-full"
-                      required
+                      className="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-700 focus:outline-none focus:border-emerald-500/80 focus:ring-1 focus:ring-emerald-500/30 transition-all duration-200"
+                      placeholder="Acme Corp"
                     />
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-2">
+                    Requested Service Line
+                  </label>
                   <select
-                    name="service" // 👈 Added for EmailJS {{service}}
+                    required
                     value={formData.service}
                     onChange={(e) =>
                       setFormData({ ...formData, service: e.target.value })
                     }
-                    className="input-dark w-full"
-                    required
+                    className="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-300 focus:outline-none focus:border-emerald-500/80 focus:ring-1 focus:ring-emerald-500/30 transition-all duration-200"
                   >
-                    <option value="">Select Service</option>
+                    <option value="" className="text-slate-600">
+                      Select Service
+                    </option>
                     <option value="vciso">Virtual CISO</option>
                     <option value="compliance">Compliance Solutions</option>
                     <option value="assessment">Cyber Risk Assessment</option>
@@ -4918,94 +5470,63 @@ function ContactSection() {
                     <option value="dataprotection">Data Protection</option>
                     <option value="other">Other</option>
                   </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-2">
+                    Message Details
+                  </label>
                   <textarea
-                    name="message" // 👈 Added for EmailJS {{message}}
+                    required
+                    rows={4}
                     value={formData.message}
                     onChange={(e) =>
                       setFormData({ ...formData, message: e.target.value })
                     }
+                    className="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-700 focus:outline-none focus:border-emerald-500/80 focus:ring-1 focus:ring-emerald-500/30 transition-all duration-200 resize-none h-32"
                     placeholder="Tell us about your security needs..."
-                    className="input-dark w-full h-32 resize-none"
-                    required
                   />
-                  <button type="submit" className="btn-primary w-full">
-                    Submit Request
-                  </button>
-                  <p className="text-xs text-slate-400 text-center">
-                    We'll respond within 24 business hours
-                  </p>
-                </form>
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="text-center py-12"
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full group relative flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 p-3.5 text-sm font-semibold text-white hover:from-emerald-400 hover:to-teal-500 transition-all duration-300 shadow-lg shadow-emerald-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <CheckCircle
-                    className="w-20 h-20 mx-auto mb-4"
-                    style={{ color: "#00ff88" }}
-                  />
-                  <h4 className="text-2xl font-bold mb-2">Thank You!</h4>
-                  <p className="text-slate-400">
-                    Your request has been submitted.
-                  </p>
-                </motion.div>
-              )}
-            </div>
-          </motion.div>
-          <motion.div
-            className="space-y-6"
-            initial={{ opacity: 0, x: 50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-          >
-            <div className="glass-card p-6">
-              <div className="flex items-start gap-4">
-                <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: "rgba(0, 255, 136, 0.2)" }}
-                >
-                  <Phone className="w-6 h-6" style={{ color: "#00ff88" }} />
-                </div>
-                <div>
-                  <h4 className="font-semibold mb-1">Phone</h4>
-                  <p className="text-slate-400">+1 (240) 729-0299</p>
-                </div>
-              </div>
-            </div>
-            <div className="glass-card p-6">
-              <div className="flex items-start gap-4">
-                <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: "rgba(0, 212, 255, 0.2)" }}
-                >
-                  <Mail className="w-6 h-6" style={{ color: "#00d4ff" }} />
-                </div>
-                <div>
-                  <h4 className="font-semibold mb-1">Email</h4>
-                  <p className="text-slate-400">info@myitguard.com</p>
-                </div>
-              </div>
-            </div>
-            <div className="glass-card p-6">
-              <h4 className="font-semibold mb-4">Emergency Response</h4>
-              <p className="text-slate-400 mb-4">
-                Experiencing a security incident? Our rapid response team is
-                available 24/7.
-              </p>
-              <button className="btn-secondary w-full flex items-center justify-center gap-2">
-                <AlertTriangle className="w-5 h-5" />
-                Report Incident
-              </button>
-            </div>
+                  <span>
+                    {isSubmitting ? "Transmitting..." : "Submit Request"}
+                  </span>
+                  {!isSubmitting && (
+                    <Send className="w-4 h-4 transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
+                  )}
+                </button>
+
+                <p className="text-xs text-slate-500 text-center font-mono tracking-wide uppercase">
+                  Response Window: Within 24 Business Hours
+                </p>
+              </form>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-slate-900/40 rounded-2xl backdrop-blur-sm"
+              >
+                <CheckCircle className="w-16 h-16 mb-4 text-emerald-400 drop-shadow-[0_0_12px_rgba(52,211,153,0.3)]" />
+                <h4 className="text-2xl font-bold mb-2 text-white">
+                  Transmission Successful
+                </h4>
+                <p className="text-slate-400 max-w-xs text-sm">
+                  Your request has been successfully routed. An advisor will
+                  review your variables shortly.
+                </p>
+              </motion.div>
+            )}
           </motion.div>
         </div>
       </div>
     </section>
   );
 }
-
 // Footer
 interface FooterProps {
   onNavigate: (section: string) => void;
