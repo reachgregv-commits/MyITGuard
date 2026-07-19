@@ -2910,28 +2910,64 @@ function ServicesSection({
 // Resources Section
 type ResourceKey = "checklist" | "calculator" | "playbook" | "glossary";
 
+interface ResourceTab {
+  id: ResourceKey;
+  icon: React.ReactNode;
+  title: string;
+}
+
 function ResourcesSection() {
   const navigate = useNavigate();
   const location = useLocation();
+
   const initial =
     location.hash === "#roi-calculator" ? "calculator" : "checklist";
   const [activeResource, setActiveResource] = useState<ResourceKey>(initial);
 
-  const playbookMdFallback = `# Human Firewall Playbook
-Practical, low-friction actions to reduce human risk in 60 days. Use this as a lightweight runbook for awareness, behavior change, and measurable outcomes.
-`;
+  // Track the active hover timeout to prevent layout jitter
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const playbookMdFallback = `# Human Firewall Playbook\nPractical, low-friction actions to reduce human risk in 60 days. Use this as a lightweight runbook for awareness, behavior change, and measurable outcomes.\n`;
 
   useEffect(() => {
     if (location.hash === "#roi-calculator") {
+      // Force the tab to activate instantly
       setActiveResource("calculator");
+
+      // Allow a split second for the tab panel DOM to render, then scroll down cleanly
       const el = document.getElementById("roi-calculator");
-      if (el)
-        setTimeout(
-          () => el.scrollIntoView({ behavior: "smooth", block: "start" }),
-          80,
-        );
+      if (el) {
+        setTimeout(() => {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 100);
+      }
     }
   }, [location.hash]);
+
+  // Clean up timers on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    };
+  }, []);
+
+  const handleMouseEnter = (id: ResourceKey) => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+
+    // 150ms delay confirms the user actually intended to switch to this tab
+    hoverTimeoutRef.current = setTimeout(() => {
+      setActiveResource(id);
+    }, 150);
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+  };
+
+  const handleTabClick = (id: ResourceKey) => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    setActiveResource(id);
+  };
 
   const handlePlaybookDownload = async () => {
     try {
@@ -2945,45 +2981,33 @@ Practical, low-friction actions to reduce human risk in 60 days. Use this as a l
   };
 
   const triggerPdfDownload = (text: string) => {
-    // Initialize jsPDF with letter format and points as units
     const doc = new jsPDF({ unit: "pt", format: "letter" });
 
-    // --- Premium Cyber Brand Palette ---
-    const bgDark = [11, 19, 43]; // Deep Midnight Slate
-    const brandGreen = [0, 255, 136]; // Neon Cyber Green
-    const brandCyan = [0, 212, 255]; // Tech Accent Cyan
-    const brandPurple = [139, 92, 246]; // Cyber Signature Purple
-    const bodyText = [241, 245, 249]; // Crisp Off-White
+    const bgDark = [11, 19, 43];
+    const brandGreen = [0, 255, 136];
+    const brandCyan = [0, 212, 255];
+    const brandPurple = [139, 92, 246];
+    const bodyText = [241, 245, 249];
 
     const margin = 50;
     const maxWidth = 512;
     const pageHeight = doc.internal.pageSize.getHeight();
     const pageWidth = doc.internal.pageSize.getWidth();
-
-    // Starting Y coordinate below the branded header
     let y = margin + 40;
 
-    // -Helper: Paint Full-Bleed Dark Background & Header -
     const paintDarkBackground = () => {
-      // Draw background fill
       doc.setFillColor(bgDark[0], bgDark[1], bgDark[2]);
       doc.rect(0, 0, pageWidth, pageHeight, "F");
-
-      // Top neon highlight bar
       doc.setFillColor(brandGreen[0], brandGreen[1], brandGreen[2]);
       doc.rect(0, 0, pageWidth, 4, "F");
-
-      // Render Header Branding
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10);
       doc.setTextColor(brandCyan[0], brandCyan[1], brandCyan[2]);
       doc.text("MyITGuard | SECURE RESOURCE", margin, 25);
     };
 
-    // Initialize Page 1 Canvas
     paintDarkBackground();
 
-    // --- Helper: Standard Text Renderer with Smart Page Breaks ---
     const addLine = (
       content: string,
       opts: {
@@ -3009,42 +3033,36 @@ Practical, low-friction actions to reduce human risk in 60 days. Use this as a l
       const lineHeight = size + 6;
       const neededHeight = textLines.length * lineHeight;
 
-      // If content overflows the sheet bounds, add a new running page
       if (y + neededHeight > pageHeight - margin) {
         doc.addPage();
         paintDarkBackground();
-        y = margin + 30; // Reset text line tracking below running header
+        y = margin + 30;
       }
 
       doc.text(textLines, margin, y);
       y += neededHeight;
     };
 
-    // --- Title Layout Banner ---
     addLine("Human Firewall Playbook", {
       size: 22,
       color: brandGreen,
       bold: true,
     });
-
     y += 4;
     addLine("Enterprise Security Awareness & Training Manual", {
       size: 11,
       color: brandCyan,
-      bold: false,
     });
 
-    // Subtle separator line below title
     y += 10;
     doc.setDrawColor(30, 41, 59);
     doc.line(margin, y, pageWidth - margin, y);
     y += 20;
 
-    // --- Parse and Format Markdown Lines Live ---
     text.split("\n").forEach((raw) => {
       const line = raw.trim();
       if (!line) {
-        y += 8; // Blank spacer row between paragraphs
+        y += 8;
         return;
       }
 
@@ -3065,20 +3083,16 @@ Practical, low-friction actions to reduce human risk in 60 days. Use this as a l
         });
         y += 4;
       } else if (line.startsWith("- ") || line.startsWith("• ")) {
-        // Clean out standard markdown bullet prefixes
-        let cleanLine = line.replace(/^[-•]\s*/, "");
+        const cleanLine = line.replace(/^[-•]\s*/, "");
 
-        // Match bold header format within a list item (e.g. "**Label**: Body Text")
         if (cleanLine.startsWith("**") && cleanLine.includes("**:", 2)) {
           const parts = cleanLine.split("**:");
-          const boldLabel = parts[0].replace(/\*\*/g, "") + ":"; // Ex: "MFA everywhere:"
-          const normalText = parts.slice(1).join("**:"); // Ex: " Okta/M365/SSO..."
+          const boldLabel = parts[0].replace(/\*\*/g, "") + ":";
+          const normalText = parts.slice(1).join("**:");
 
           doc.setFont("helvetica", "normal");
           doc.setFontSize(11);
-          doc.setTextColor(bodyText[0], bodyText[1], bodyText[2]);
 
-          // Measure text footprint before placing on grid
           const bulletSymbol = "  •  ";
           const bulletWidth = doc.getTextWidth(bulletSymbol);
 
@@ -3086,7 +3100,6 @@ Practical, low-friction actions to reduce human risk in 60 days. Use this as a l
           const labelWidth = doc.getTextWidth(boldLabel);
 
           doc.setFont("helvetica", "normal");
-          // Deduct bullet and label footprint from maximum rendering track
           const textLines = doc.splitTextToSize(
             normalText,
             maxWidth - bulletWidth - labelWidth,
@@ -3095,54 +3108,42 @@ Practical, low-friction actions to reduce human risk in 60 days. Use this as a l
           const neededBlockHeight =
             Math.max(1, textLines.length) * lineUnitHeight;
 
-          // Check boundary limit before drawing compound text block
           if (y + neededBlockHeight > pageHeight - margin) {
             doc.addPage();
             paintDarkBackground();
             y = margin + 30;
           }
 
-          // 1. Draw bullet symbol
           doc.setFont("helvetica", "normal");
           doc.setTextColor(bodyText[0], bodyText[1], bodyText[2]);
           doc.text(bulletSymbol, margin, y);
 
-          // 2. Draw inline bold label
           doc.setFont("helvetica", "bold");
           doc.setTextColor(brandGreen[0], brandGreen[1], brandGreen[2]);
           doc.text(boldLabel, margin + bulletWidth, y);
 
-          // 3. Draw standard wrapped text payload right next to it
           doc.setFont("helvetica", "normal");
           doc.setTextColor(bodyText[0], bodyText[1], bodyText[2]);
           doc.text(textLines, margin + bulletWidth + labelWidth, y);
 
           y += neededBlockHeight;
         } else {
-          // Standard text bullet fallback
           addLine(cleanLine, { size: 11, color: bodyText, bullet: true });
           y += 2;
         }
-      } else if (/^[\d]+\.\s/.test(line)) {
-        addLine(line, { size: 11, color: bodyText });
-        y += 2;
       } else {
-        addLine(line, { size: 11, color: bodyText });
+        addLine(line.replace(/^[\d]+\.\s/, ""), { size: 11, color: bodyText });
         y += 2;
       }
     });
 
-    // --- Branded Secure Footer Block ---
     y += 25;
-
-    // Quick room verification before compiling footer footprint
     if (y + 40 > pageHeight - margin) {
       doc.addPage();
       paintDarkBackground();
       y = margin + 30;
     }
 
-    // Divider line above footer
     doc.setDrawColor(30, 41, 59);
     doc.line(margin, y, pageWidth - margin, y);
     y += 20;
@@ -3152,15 +3153,135 @@ Practical, low-friction actions to reduce human risk in 60 days. Use this as a l
       color: brandPurple,
       bold: true,
     });
-
     addLine("Guarding Every Byte • info@myitguard.com • +1 (240) 729-0299", {
       size: 9,
-      color: [148, 163, 184], // Muted slate gray meta font
+      color: [148, 163, 184],
     });
 
-    // Save and pop the download payload
     doc.save("myitguard-human-firewall-playbook.pdf");
   };
+
+  const tabs: ResourceTab[] = [
+    {
+      id: "checklist",
+      icon: <FileCheck className="w-6 h-6" />,
+      title: "Compliance Checklists",
+    },
+    {
+      id: "calculator",
+      icon: <Calculator className="w-6 h-6" />,
+      title: "vCISO ROI Calculator",
+    },
+    {
+      id: "playbook",
+      icon: <BookOpen className="w-6 h-6" />,
+      title: "Human Firewall Playbook",
+    },
+    {
+      id: "glossary",
+      icon: <Search className="w-6 h-6" />,
+      title: "Threat Glossary",
+    },
+  ];
+
+  const checklistData = [
+    {
+      title: "HIPAA",
+      color: "#00ff88",
+      items: [
+        "Risk analysis & management",
+        "Access controls (unique IDs/MFA)",
+        "Audit logs & monitoring",
+        "Business Associate Agreements",
+        "Encryption for ePHI at rest/in transit",
+        "Contingency/backup plans",
+      ],
+    },
+    {
+      title: "FedRAMP (Moderate)",
+      color: "#00d4ff",
+      items: [
+        "System security plan (SSP)",
+        "FIPS-validated encryption",
+        "Vulnerability scanning (weekly/monthly)",
+        "Continuous monitoring (SIEM/alerts)",
+        "POA&M tracking & remediation",
+        "Incident response plan & testing",
+      ],
+    },
+    {
+      title: "SOC 2 Type II",
+      color: "#a78bfa",
+      items: [
+        "Policies & approvals (AUP, IR, DR)",
+        "Change management & CAB evidence",
+        "Access reviews (quarterly)",
+        "Vendor risk assessments",
+        "Logging, alerting, retention",
+        "Backup/restore & DR testing evidence",
+      ],
+    },
+    {
+      title: "NIST 800-171",
+      color: "#f472b6",
+      items: [
+        "CUI inventory & marking",
+        "Multi-factor authentication",
+        "Least privilege & role-based access",
+        "Config baselines & hardening",
+        "Audit log protection & review",
+        "Incident response tabletop",
+      ],
+    },
+    {
+      title: "PCI DSS 4.0",
+      color: "#facc15",
+      items: [
+        "Cardholder data flow & segmentation",
+        "Network firewall rules review",
+        "Strong cryptography for PAN",
+        "Quarterly ASV scans & annual pen test",
+        "Change control & code review",
+        "Logging & file integrity monitoring",
+      ],
+    },
+    {
+      title: "CIS Controls v8",
+      color: "#38bdf8",
+      items: [
+        "Asset inventory (HW/SW)",
+        "Secure configuration baselines",
+        "Vulnerability mgmt & patch SLAs",
+        "Admin privileges: limit & monitor",
+        "Logging & SIEM coverage",
+        "Email/web protections & backups",
+      ],
+    },
+    {
+      title: "GDPR",
+      color: "#ec4899",
+      items: [
+        "Record of processing activities (RoPA)",
+        "Lawful basis & consent management",
+        "DPIAs for high-risk processing",
+        "Data subject rights (DSAR) process",
+        "DPA + SCCs with processors",
+        "Breach notification playbook (72h)",
+      ],
+    },
+    {
+      title: "CCPA/CPRA",
+      color: "#fb7185",
+      items: [
+        "Data inventory & “sale/share” classification",
+        "Privacy notices with Do Not Sell/Share links",
+        "Sensitive data handling & opt-out signals (GPC)",
+        "Consumer rights: access/delete/correct/limit use",
+        "Vendor contracts with CPRA clauses",
+        "Incident & breach response aligned to CA timelines",
+      ],
+    },
+  ];
 
   return (
     <section id="resources" className="py-24 relative bg-slate-900/50">
@@ -3185,33 +3306,15 @@ Practical, low-friction actions to reduce human risk in 60 days. Use this as a l
             materials, and industry definitions.
           </p>
         </motion.div>
+
+        {/* Tab Navigation System with Debounced Hover Actions */}
         <div className="flex flex-wrap justify-center gap-4 mb-12">
-          {[
-            {
-              id: "checklist",
-              icon: <FileCheck className="w-6 h-6" />,
-              title: "Compliance Checklists",
-            },
-            {
-              id: "calculator",
-              icon: <Calculator className="w-6 h-6" />,
-              title: "vCISO ROI Calculator",
-            },
-            {
-              id: "playbook",
-              icon: <BookOpen className="w-6 h-6" />,
-              title: "Human Firewall Playbook",
-            },
-            {
-              id: "glossary",
-              icon: <Search className="w-6 h-6" />,
-              title: "Threat Glossary",
-            },
-          ].map((resource) => (
+          {tabs.map((resource) => (
             <button
               key={resource.id}
-              onMouseEnter={() => setActiveResource(resource.id as ResourceKey)}
-              onClick={() => setActiveResource(resource.id as ResourceKey)}
+              onClick={() => handleTabClick(resource.id)}
+              onMouseEnter={() => handleMouseEnter(resource.id)}
+              onMouseLeave={handleMouseLeave}
               className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all ${
                 activeResource === resource.id
                   ? "bg-gradient-to-r from-cyber-green/20 to-cyber-blue/20 border border-cyber-green/30 text-white"
@@ -3223,7 +3326,9 @@ Practical, low-friction actions to reduce human risk in 60 days. Use this as a l
             </button>
           ))}
         </div>
+
         <div id="roi-calculator" className="h-0 w-px" aria-hidden />
+
         <AnimatePresence mode="wait">
           {activeResource === "checklist" && (
             <motion.div
@@ -3235,10 +3340,7 @@ Practical, low-friction actions to reduce human risk in 60 days. Use this as a l
               transition={{ duration: 0.5 }}
             >
               <div className="text-center mb-5">
-                <FileCheck
-                  className="w-11 h-11 mx-auto mb-2.5"
-                  style={{ color: "#00ff88" }}
-                />
+                <FileCheck className="w-11 h-11 mx-auto mb-2.5 text-[#00ff88]" />
                 <h3 className="text-lg font-bold mb-1">
                   Compliance Checklists
                 </h3>
@@ -3248,104 +3350,7 @@ Practical, low-friction actions to reduce human risk in 60 days. Use this as a l
                 </p>
               </div>
               <div className="grid md:grid-cols-2 gap-3">
-                {[
-                  {
-                    title: "HIPAA",
-                    color: "#00ff88",
-                    items: [
-                      "Risk analysis & management",
-                      "Access controls (unique IDs/MFA)",
-                      "Audit logs & monitoring",
-                      "Business Associate Agreements",
-                      "Encryption for ePHI at rest/in transit",
-                      "Contingency/backup plans",
-                    ],
-                  },
-                  {
-                    title: "FedRAMP (Moderate)",
-                    color: "#00d4ff",
-                    items: [
-                      "System security plan (SSP)",
-                      "FIPS-validated encryption",
-                      "Vulnerability scanning (weekly/monthly)",
-                      "Continuous monitoring (SIEM/alerts)",
-                      "POA&M tracking & remediation",
-                      "Incident response plan & testing",
-                    ],
-                  },
-                  {
-                    title: "SOC 2 Type II",
-                    color: "#a78bfa",
-                    items: [
-                      "Policies & approvals (AUP, IR, DR)",
-                      "Change management & CAB evidence",
-                      "Access reviews (quarterly)",
-                      "Vendor risk assessments",
-                      "Logging, alerting, retention",
-                      "Backup/restore & DR testing evidence",
-                    ],
-                  },
-                  {
-                    title: "NIST 800-171",
-                    color: "#f472b6",
-                    items: [
-                      "CUI inventory & marking",
-                      "Multi-factor authentication",
-                      "Least privilege & role-based access",
-                      "Config baselines & hardening",
-                      "Audit log protection & review",
-                      "Incident response tabletop",
-                    ],
-                  },
-                  {
-                    title: "PCI DSS 4.0",
-                    color: "#facc15",
-                    items: [
-                      "Cardholder data flow & segmentation",
-                      "Network firewall rules review",
-                      "Strong cryptography for PAN",
-                      "Quarterly ASV scans & annual pen test",
-                      "Change control & code review",
-                      "Logging & file integrity monitoring",
-                    ],
-                  },
-                  {
-                    title: "CIS Controls v8",
-                    color: "#38bdf8",
-                    items: [
-                      "Asset inventory (HW/SW)",
-                      "Secure configuration baselines",
-                      "Vulnerability mgmt & patch SLAs",
-                      "Admin privileges: limit & monitor",
-                      "Logging & SIEM coverage",
-                      "Email/web protections & backups",
-                    ],
-                  },
-                  {
-                    title: "GDPR",
-                    color: "#ec4899",
-                    items: [
-                      "Record of processing activities (RoPA)",
-                      "Lawful basis & consent management",
-                      "DPIAs for high-risk processing",
-                      "Data subject rights (DSAR) process",
-                      "DPA + SCCs with processors",
-                      "Breach notification playbook (72h)",
-                    ],
-                  },
-                  {
-                    title: "CCPA/CPRA",
-                    color: "#fb7185",
-                    items: [
-                      "Data inventory & “sale/share” classification",
-                      "Privacy notices with Do Not Sell/Share links",
-                      "Sensitive data handling & opt-out signals (GPC)",
-                      "Consumer rights: access/delete/correct/limit use",
-                      "Vendor contracts with CPRA clauses",
-                      "Incident & breach response aligned to CA timelines",
-                    ],
-                  },
-                ].map((check) => (
+                {checklistData.map((check) => (
                   <div
                     key={check.title}
                     className="p-3 rounded-xl bg-slate-900/50 border border-white/5 space-y-1.5"
@@ -3368,7 +3373,7 @@ Practical, low-friction actions to reduce human risk in 60 days. Use this as a l
                       {check.items.map((item) => (
                         <li key={item} className="flex gap-2">
                           <span
-                            className="mt-[6px] h-1.5 w-1.5 rounded-full"
+                            className="mt-[6px] h-1.5 w-1.5 rounded-full flex-shrink-0"
                             style={{ backgroundColor: check.color }}
                           />
                           <span>{item}</span>
@@ -3380,6 +3385,7 @@ Practical, low-friction actions to reduce human risk in 60 days. Use this as a l
               </div>
             </motion.div>
           )}
+
           {activeResource === "calculator" && (
             <motion.div
               key="calculator"
@@ -3392,6 +3398,7 @@ Practical, low-friction actions to reduce human risk in 60 days. Use this as a l
               <RoiCalculator />
             </motion.div>
           )}
+
           {activeResource === "playbook" && (
             <motion.div
               key="playbook"
@@ -3416,17 +3423,24 @@ Practical, low-friction actions to reduce human risk in 60 days. Use this as a l
                     share with teams.
                   </p>
                   <div className="grid grid-cols-2 gap-3 text-sm text-slate-200">
-                    <Pill text="Phishing & BEC" color="#00ff88" />
-                    <Pill text="AI & deepfakes" color="#00d4ff" />
-                    <Pill text="Data handling" color="#a78bfa" />
-                    <Pill text="Remote work hygiene" color="#f472b6" />
+                    <span className="px-3 py-1.5 bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/20 rounded-lg text-center font-medium">
+                      Phishing & BEC
+                    </span>
+                    <span className="px-3 py-1.5 bg-[#00d4ff]/10 text-[#00d4ff] border border-[#00d4ff]/20 rounded-lg text-center font-medium">
+                      AI & deepfakes
+                    </span>
+                    <span className="px-3 py-1.5 bg-[#a78bfa]/10 text-[#a78bfa] border border-[#a78bfa]/20 rounded-lg text-center font-medium">
+                      Data handling
+                    </span>
+                    <span className="px-3 py-1.5 bg-[#f472b6]/10 text-[#f472b6] border border-[#f472b6]/20 rounded-lg text-center font-medium">
+                      Remote work hygiene
+                    </span>
                   </div>
                   <button
                     onClick={handlePlaybookDownload}
-                    className="btn-secondary inline-flex items-center gap-2 w-fit"
+                    className="btn-secondary inline-flex items-center gap-2 w-fit mt-2"
                   >
-                    <Download className="w-5 h-5" /> Download Playbook
-                    (markdown)
+                    <Download className="w-5 h-5" /> Download Playbook (.md)
                   </button>
                   <p className="text-xs text-slate-400">
                     Sized for quick wins: goals, cadence, drills, metrics, and
@@ -3436,19 +3450,19 @@ Practical, low-friction actions to reduce human risk in 60 days. Use this as a l
 
                 <div className="lg:w-1/2 grid gap-3">
                   {[
-                    `Phish click rate under 5% and report <15m`,
-                    `MFA + password manager as mandatory first step`,
-                    `Report-a-phish drills and quarterly table-tops`,
-                    `AI/Deepfake callback rule: verify on trusted channel`,
-                    `DLP-friendly guidance: no public links by default`,
-                    `Travel & remote: VPN, no open Wi-Fi, lock screens`,
+                    "Phish click rate under 5% and report <15m",
+                    "MFA + password manager as mandatory first step",
+                    "Report-a-phish drills and quarterly table-tops",
+                    "AI/Deepfake callback rule: verify on trusted channel",
+                    "DLP-friendly guidance: no public links by default",
+                    "Travel & remote: VPN, no open Wi-Fi, lock screens",
                   ].map((item) => (
                     <div
                       key={item}
                       className="p-3 rounded-xl bg-slate-900/60 border border-white/5 flex gap-3 items-start"
                     >
                       <span
-                        className="mt-1 h-2 w-2 rounded-full"
+                        className="mt-1.5 h-2 w-2 rounded-full flex-shrink-0"
                         style={{ backgroundColor: "#00ff88" }}
                       />
                       <p className="text-sm text-slate-200">{item}</p>
@@ -3458,6 +3472,7 @@ Practical, low-friction actions to reduce human risk in 60 days. Use this as a l
               </div>
             </motion.div>
           )}
+
           {activeResource === "glossary" && (
             <motion.div
               key="glossary"
@@ -3468,10 +3483,7 @@ Practical, low-friction actions to reduce human risk in 60 days. Use this as a l
               transition={{ duration: 0.35 }}
             >
               <div className="text-center py-12">
-                <Search
-                  className="w-16 h-16 mx-auto mb-4"
-                  style={{ color: "#f472b6" }}
-                />
+                <Search className="w-16 h-16 mx-auto mb-4 text-[#f472b6]" />
                 <h3 className="text-2xl font-bold mb-4">
                   Threat Intelligence Glossary
                 </h3>
@@ -4025,8 +4037,9 @@ function ArticleModal({
   );
 }
 
-// Plans Section
+//Plans Section
 function PlansSection() {
+  const navigate = useNavigate();
   const plans = [
     {
       name: "Infantry",
@@ -4069,7 +4082,7 @@ function PlansSection() {
       color: "#00ff88",
     },
     {
-      name: "Enterprise",
+      name: "Elite Fortress",
       description:
         "Full security leadership for established organizations with complex requirements",
       features: [
@@ -4181,51 +4194,6 @@ function PlansSection() {
       ],
     },
     {
-      category: "Network Security",
-      services: [
-        {
-          name: "Network Security",
-          description:
-            "Advanced security protocols and monitoring to protect your network from breaches",
-        },
-        {
-          name: "Firewall & Network Security Monitoring",
-          description:
-            "Continuous monitoring and management of firewall and network security",
-        },
-        {
-          name: "Virtual Private Network (VPN)",
-          description:
-            "Secure VPN services ensuring privacy and safe internet access",
-        },
-        {
-          name: "Endpoint Security Management",
-          description:
-            "Comprehensive protection for all devices connecting to your network",
-        },
-      ],
-    },
-    {
-      category: "Training & Awareness",
-      services: [
-        {
-          name: "Cybersecurity Awareness Training",
-          description:
-            "Educate your team on security best practices to create a human firewall",
-        },
-        {
-          name: "Phishing Simulations",
-          description:
-            "Realistic phishing tests to train employees on recognizing threats",
-        },
-        {
-          name: "Custom Security Training",
-          description:
-            "Tailored training programs specific to your organization needs",
-        },
-      ],
-    },
-    {
       category: "Incident Response",
       services: [
         {
@@ -4249,50 +4217,15 @@ function PlansSection() {
         },
       ],
     },
-    {
-      category: "Vendor & Third-Party",
-      services: [
-        {
-          name: "3rd Party Vendor Security Assessments",
-          description:
-            "Evaluate and manage security risks from third-party vendors",
-        },
-        {
-          name: "Vendor Risk Management Program",
-          description:
-            "Comprehensive program for ongoing vendor security monitoring",
-        },
-        {
-          name: "Security Questionnaire Support",
-          description:
-            "Assistance completing customer and partner security questionnaires",
-        },
-      ],
-    },
-    {
-      category: "Reporting & Analytics",
-      services: [
-        {
-          name: "Monthly Security Report",
-          description:
-            "Regular reports on security posture, incidents, and improvements",
-        },
-        {
-          name: "Security Program Metrics & KPIs",
-          description: "Track and measure security program effectiveness",
-        },
-        {
-          name: "Risk Assessment Reports",
-          description:
-            "Detailed documentation of identified risks and remediation plans",
-        },
-      ],
-    },
   ];
 
   return (
-    <section id="plans" className="py-24 relative bg-slate-900/50">
+    <section
+      id="plans"
+      className="py-24 relative bg-slate-900/50 overflow-hidden"
+    >
       <div className="max-w-7xl mx-auto px-6">
+        {/* Section Title */}
         <motion.div
           className="text-center mb-16"
           initial={{ opacity: 0, y: 30 }}
@@ -4315,48 +4248,56 @@ function PlansSection() {
         </motion.div>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-3 gap-8 mb-20">
+        <div className="grid lg:grid-cols-3 gap-8 items-stretch mb-20">
           {plans.map((plan, index) => (
             <motion.div
               key={plan.name}
-              className={`glass-card p-8 relative ${plan.popular ? "border-cyber-green/50 scale-105" : ""}`}
+              className={`glass-card p-8 relative flex flex-col justify-between h-full ${
+                plan.popular ? "border-cyber-green/50 scale-105 z-10" : ""
+              }`}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
             >
-              {plan.popular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 badge-cyber px-6 py-2">
-                  Most Popular
-                </div>
-              )}
+              <div>
+                {plan.popular && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 badge-cyber px-6 py-2">
+                    Most Popular
+                  </div>
+                )}
 
-              <div className="text-center mb-8">
-                <h3
-                  className="text-2xl font-bold mb-2"
-                  style={{ color: plan.color }}
-                >
-                  {plan.name}
-                </h3>
-                <p className="text-slate-400 text-sm mb-6">
-                  {plan.description}
-                </p>
+                <div className="text-center mb-8">
+                  <h3
+                    className="text-2xl font-bold mb-2"
+                    style={{ color: plan.color }}
+                  >
+                    {plan.name}
+                  </h3>
+                  <p className="text-slate-400 text-sm mb-6 min-h-[40px]">
+                    {plan.description}
+                  </p>
+                </div>
+
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((feature, i) => (
+                    <li key={i} className="flex items-start gap-3">
+                      <CheckCircle
+                        className="w-5 h-5 flex-shrink-0 mt-0.5"
+                        style={{ color: plan.color }}
+                      />
+                      <span className="text-slate-300 text-sm">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
 
-              <ul className="space-y-3 mb-8">
-                {plan.features.map((feature, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <CheckCircle
-                      className="w-5 h-5 flex-shrink-0 mt-0.5"
-                      style={{ color: plan.color }}
-                    />
-                    <span className="text-slate-300 text-sm">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-
               <button
-                className={`w-full py-4 rounded-xl font-semibold transition-all ${plan.popular ? "btn-primary" : "bg-slate-800 hover:bg-slate-700 text-white"}`}
+                className={`w-full py-4 rounded-xl font-semibold transition-all cursor-pointer ${
+                  plan.popular
+                    ? "btn-primary"
+                    : "bg-slate-800 hover:bg-slate-700 text-white"
+                }`}
               >
                 {plan.cta}
               </button>
@@ -4364,7 +4305,7 @@ function PlansSection() {
           ))}
         </div>
 
-        {/* A La Carte Services */}
+        {/* À La Carte Services Matrix */}
         <motion.div
           className="glass-card p-8 md:p-12"
           initial={{ opacity: 0, y: 30 }}
@@ -4390,12 +4331,15 @@ function PlansSection() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
               >
-                <h4
-                  className="text-xl font-bold mb-4 pb-2 border-b border-slate-700"
-                  style={{ color: "#00d4ff" }}
-                >
-                  {category.category}
-                </h4>
+                <div className="flex items-center gap-2.5 mb-4 pb-2 border-b border-slate-700">
+                  <ShieldCheck className="w-5 h-5 text-cyan-400" />
+                  <h4
+                    className="text-xl font-bold"
+                    style={{ color: "#00d4ff" }}
+                  >
+                    {category.category}
+                  </h4>
+                </div>
                 <ul className="space-y-4">
                   {category.services.map((service, i) => (
                     <li key={i} className="flex items-start gap-3">
@@ -4419,77 +4363,7 @@ function PlansSection() {
           </div>
         </motion.div>
 
-        {/* All Services Summary */}
-        <motion.div
-          className="mt-20"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-        >
-          <div className="glass-card p-8 md:p-12">
-            <div className="text-center mb-12">
-              <h3 className="text-3xl font-bold mb-4">
-                Complete Service Catalog
-              </h3>
-              <p className="text-slate-300">
-                All MyITGuard services at a glance
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {[
-                "Cyber Risk Assessment",
-                "Compliance Solutions",
-                "Network Security",
-                "Virtual Private Network (VPN)",
-                "Security Awareness Training",
-                "Virtual CISO (vCISO)",
-                "Fractional CISO Services",
-                "HIPAA Compliance",
-                "SOC 2 Readiness",
-                "CMMC Certification Prep",
-                "IT Security Gap Assessment",
-                "Risk Assessment & Consulting",
-                "Security Policy Development",
-                "Firewall & Network Monitoring",
-                "Endpoint Security Management",
-                "Cyber Incident Support",
-                "Incident Response Planning",
-                "3rd Party Vendor Assessments",
-                "Vendor Risk Management",
-                "Audit Facilitation",
-                "Monthly Security Reports",
-                "Security Program Metrics",
-                "Board Reporting",
-                "vCISO Strategy Sessions",
-                "Tabletop Exercises",
-                "24/7 Incident Response",
-                "Phishing Simulations",
-                "Custom Security Training",
-                "Security Questionnaire Support",
-                "Compliance Readiness & Support",
-              ].map((service, index) => (
-                <motion.div
-                  key={service}
-                  className="p-4 rounded-lg bg-slate-800/30 hover:bg-slate-800/50 transition-all flex items-center gap-3"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: index * 0.02 }}
-                >
-                  <CheckCircle
-                    className="w-5 h-5 flex-shrink-0"
-                    style={{ color: "#00ff88" }}
-                  />
-                  <span className="text-slate-300 text-sm">{service}</span>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-
-        {/* CTA Section */}
+        {/* Section Custom Dynamic CTA Footer */}
         <motion.div
           className="mt-20 text-center"
           initial={{ opacity: 0, y: 30 }}
@@ -4505,12 +4379,20 @@ function PlansSection() {
               budget.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="btn-primary flex items-center justify-center gap-2">
+              {/* Maps to the Contact Us panel block anchor */}
+              <a
+                href="#contact"
+                className="btn-primary flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-semibold transition-all hover:scale-[1.01] active:scale-[0.99]"
+              >
                 <Mail className="w-5 h-5" />
                 Schedule Consultation
-              </button>
-              <button className="btn-secondary flex items-center justify-center gap-2">
-                <Calculator className="w-5 h-5" />
+              </a>
+              {/* Maps to the custom ROI calculator anchor context blocks */}
+              <button
+                onClick={() => navigate("/#roi-calculator")}
+                className="bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-semibold transition-all hover:scale-[1.01] active:scale-[0.99]"
+              >
+                <Calculator className="w-5 h-5 text-slate-400" />
                 ROI Calculator
               </button>
             </div>

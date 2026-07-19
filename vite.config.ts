@@ -9,11 +9,13 @@ const __dirname = path.dirname(__filename);
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss()], // 👈 viteSingleFile() is completely removed here
+  plugins: [react(), tailwindcss()],
   base: "/",
   build: {
-    outDir: ".", // 👈 Compiles assets straight into your main directory folder
-    emptyOutDir: false, // 👈 Safety flag so Vite never deletes your raw /src components
+    // 👈 Change this to a dedicated directory. Vite remains completely safe,
+    // and your workspace files are completely isolated from build artifacts.
+    outDir: "dist",
+    emptyOutDir: true,
   },
   resolve: {
     alias: {

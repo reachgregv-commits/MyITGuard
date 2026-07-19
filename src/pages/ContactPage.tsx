@@ -1,170 +1,347 @@
-import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Mail, Phone, Clock, CheckCircle, Shield, Send, AlertTriangle } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import {
+  Mail,
+  Phone,
+  Clock,
+  CheckCircle,
+  ShieldCheck,
+  Send,
+} from "lucide-react";
+import { useLocation } from "react-router-dom";
+import emailjs from "@emailjs/browser"; // Ensure you have this package imported or configured globally
 
 export default function ContactPage() {
   const location = useLocation();
-  const [sent, setSent] = useState(false);
-  const [form, setForm] = useState({ name:'', email:'', telephone:'', company:'', employees:'', service:'', urgency:'standard', message:'' });
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    company: "",
+    service: "",
+    message: "",
+  });
+  const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (location.hash === '#contact-hero') {
-      const el = document.getElementById('contact-hero');
+    // Direct fallback to push the global window object to coordinate 0,0 instantly
+    window.scrollTo({ top: 0, behavior: "instant" });
+
+    if (location.hash === "#contact-hero") {
+      const el = document.getElementById("contact-hero");
       if (el) {
-        setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+        setTimeout(
+          () => el.scrollIntoView({ behavior: "smooth", block: "start" }),
+          80,
+        );
       }
     }
   }, [location]);
 
-  const submit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setSent(true);
-    setTimeout(()=>setSent(false), 3500);
+    setIsSubmitting(true);
+
+    const SERVICE_ID = "service_vi0p04d";
+    const TEMPLATE_ID = "template_s8897th";
+    const PUBLIC_KEY = "aa3rg1srHmLVgN7wW";
+
+    const templateParams = {
+      from_name: formData.name,
+      reply_to: formData.email,
+      phone_number: formData.phone,
+      company_name: formData.company,
+      service_requested: formData.service,
+      message_details: formData.message,
+    };
+
+    emailjs
+      .send(SERVICE_ID, TEMPLATE_ID, templateParams, PUBLIC_KEY)
+      .then(() => {
+        setSubmitted(true);
+        setIsSubmitting(false);
+
+        setTimeout(() => {
+          setSubmitted(false);
+          setFormData({
+            name: "",
+            email: "",
+            phone: "",
+            company: "",
+            service: "",
+            message: "",
+          });
+        }, 3000);
+      })
+      .catch((error) => {
+        setIsSubmitting(false);
+        alert(
+          "Something went wrong. Please try again or email us directly at info@myitguard.com",
+        );
+        console.error("EmailJS Error details:", error);
+      });
   };
 
+  const contactDetails = [
+    {
+      icon: <Phone className="w-5 h-5 text-emerald-400" />,
+      label: "Telephone",
+      value: "+1 (240) 729-0299",
+      href: "tel:+12407290299",
+    },
+    {
+      icon: <Mail className="w-5 h-5 text-emerald-400" />,
+      label: "Secure Email",
+      value: "info@myitguard.com",
+      href: "mailto:info@myitguard.com",
+    },
+    {
+      icon: <Clock className="w-5 h-5 text-emerald-400" />,
+      label: "Office Hours",
+      value: "Mon - Fri: 8:00 AM - 6:00 PM EST",
+      href: null,
+    },
+  ];
+
+  const glassCardClass =
+    "flex flex-col justify-between h-full bg-slate-900/40 border border-slate-800/80 rounded-2xl p-8 lg:p-10 backdrop-blur-md shadow-xl transition-all duration-300 hover:border-emerald-500/30 hover:shadow-[0_0_25px_rgba(52,211,153,0.05)]";
+
   return (
-    <section className="pt-28 pb-24 relative">
-      <div className="absolute inset-0 bg-grid opacity-40" />
+    <section
+      id="contact-hero"
+      className="pt-28 pb-24 relative font-sans overflow-hidden bg-slate-900/50 text-white border-t border-slate-900/60"
+    >
+      {/* Background Accent Grid */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b10_1px,transparent_1px),linear-gradient(to_bottom,#1e293b10_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none" />
+
       <div className="max-w-7xl mx-auto px-6 relative z-10">
+        {/* Section Header */}
         <motion.div
-          id="contact-hero"
+          className="text-center max-w-3xl mx-auto mb-16"
           initial={{ opacity: 0, y: 22 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-14"
+          transition={{ duration: 0.5 }}
         >
-          <div className="inline-flex items-center gap-2 badge-cyber mb-4">
-            <Shield className="w-4 h-4" />
-            <span>Secure Contact</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 text-xs font-medium rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-4">
+            <ShieldCheck className="w-4 h-4" />
+            <span>Secure Terminal Gateway</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Talk to a <span className="gradient-text">security architect</span></h1>
-          <p className="text-slate-300 text-lg max-w-2xl mx-auto">
-            Free 30-minute risk assessment. No sales pressure — just clear next steps for your security program.
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">
+            Start Your <span className="gradient-text">Security Journey</span>
+          </h1>
+          <p className="text-xl text-slate-300 max-w-3xl mx-auto">
+            Ready to strengthen your cybersecurity posture? Contact us for a
+            free consultation and systemic risk analysis.
           </p>
         </motion.div>
 
-        <div className="grid lg:grid-cols-5 gap-8">
-          <div className="lg:col-span-3">
-            <div className="glass-card p-8">
-              <h2 className="text-2xl font-bold mb-6">Request your security consult</h2>
-              {!sent ? (
-                <form onSubmit={submit} className="space-y-5">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm text-slate-300 mb-1.5 block">Full name</label>
-                      <input className="input-dark w-full" required value={form.name} onChange={e=>setForm({...form, name:e.target.value})} />
+        {/* Layout Grid */}
+        <div className="grid lg:grid-cols-2 gap-12 items-stretch">
+          {/* Left Column: Contact Parameters Glass Card */}
+          <motion.div
+            className={glassCardClass}
+            initial={{ opacity: 0, x: -40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.7 }}
+          >
+            <div>
+              <h3 className="text-2xl font-bold tracking-tight mb-4 text-white">
+                Contact Us
+              </h3>
+              <p className="text-slate-400 mb-8 leading-relaxed">
+                Have specific implementation requirements or operational
+                auditing deadlines approaching? Reach out to interface directly
+                with an advisor.
+              </p>
+
+              <div className="space-y-6">
+                {contactDetails.map((item, idx) => (
+                  <div key={idx} className="flex items-start gap-4">
+                    <div className="p-3 rounded-xl bg-slate-900/50 border border-slate-800/60 mt-0.5 shadow-inner">
+                      {item.icon}
                     </div>
                     <div>
-                      <label className="text-sm text-slate-300 mb-1.5 block">Work email</label>
-                      <input type="email" className="input-dark w-full" required value={form.email} onChange={e=>setForm({...form, email:e.target.value})} />
-                    </div>
-                    <div>
-                      <label className="text-sm text-slate-300 mb-1.5 block">Telephone</label>
-                      <input type="tel" className="input-dark w-full" placeholder="(555) 000-0000" value={form.telephone} onChange={e=>setForm({...form, telephone:e.target.value})} />
-                    </div>
-                    <div>
-                      <label className="text-sm text-slate-300 mb-1.5 block">Company</label>
-                      <input className="input-dark w-full" required value={form.company} onChange={e=>setForm({...form, company:e.target.value})} />
-                    </div>
-                    <div>
-                      <label className="text-sm text-slate-300 mb-1.5 block">Team size</label>
-                      <select className="input-dark w-full" value={form.employees} onChange={e=>setForm({...form, employees:e.target.value})}>
-                        <option value="">Select</option>
-                        <option>1-10</option>
-                        <option>11-50</option>
-                        <option>51-200</option>
-                        <option>200-1000</option>
-                        <option>1000+</option>
-                      </select>
+                      <span className="block text-xs font-mono text-slate-500 uppercase tracking-wider mb-0.5">
+                        {item.label}
+                      </span>
+                      {item.href ? (
+                        <a
+                          href={item.href}
+                          className="text-slate-200 font-medium hover:text-emerald-400 transition-colors duration-200"
+                        >
+                          {item.value}
+                        </a>
+                      ) : (
+                        <span className="text-slate-300 font-medium">
+                          {item.value}
+                        </span>
+                      )}
                     </div>
                   </div>
-
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm text-slate-300 mb-1.5 block">Primary interest</label>
-                      <select className="input-dark w-full" value={form.service} onChange={e=>setForm({...form, service:e.target.value})}>
-                        <option value="">Choose a service</option>
-                        <option>Virtual CISO</option>
-                        <option>HIPAA Compliance</option>
-                        <option>SOC 2 Readiness</option>
-                        <option>CMMC</option>
-                        <option>Risk Assessment</option>
-                        <option>Security Training</option>
-                        <option>Incident Response</option>
-                        <option>Learn more about MyITGuard/Plans</option>
-                        <option>Account Management</option>
-                        <option>Technical Support</option>
-                        <option>Invoice and Billing</option>
-                        <option>Other Inquiry</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-sm text-slate-300 mb-1.5 block">Urgency</label>
-                      <select className="input-dark w-full" value={form.urgency} onChange={e=>setForm({...form, urgency:e.target.value})}>
-                        <option value="standard">Standard (2-3 days)</option>
-                        <option value="priority">Priority (24h)</option>
-                        <option value="emergency">Active incident</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-sm text-slate-300 mb-1.5 block">How can we help?</label>
-                    <textarea className="input-dark w-full h-32 resize-none" placeholder="Briefly describe your security goals, compliance needs, or current challenges..."
-                      required value={form.message} onChange={e=>setForm({...form, message:e.target.value})} />
-                  </div>
-
-                  <button type="submit" className="btn-primary w-full flex items-center justify-center gap-2">
-                    <Send className="w-4 h-4" /> Send secure request
-                  </button>
-                  <p className="text-xs text-slate-400 text-center">TLS encrypted • SOC 2 aligned intake • Response within 24 hrs</p>
-                </form>
-              ) : (
-                <motion.div initial={{opacity:0, scale:.96}} animate={{opacity:1, scale:1}} className="text-center py-16">
-                  <CheckCircle className="w-16 h-16 mx-auto mb-4" style={{ color: '#00ff88' }} />
-                  <h3 className="text-2xl font-bold mb-2">Request received</h3>
-                  <p className="text-slate-300">A MyITGuard security architect will reach out within 24 hours.</p>
-                </motion.div>
-              )}
-            </div>
-          </div>
-
-          <div className="lg:col-span-2 space-y-5">
-            <div className="glass-card p-6">
-              <h3 className="font-bold text-lg mb-4">Direct channels</h3>
-              <div className="space-y-4 text-sm">
-                <div className="flex gap-3">
-                  <Phone className="w-5 h-5 mt-0.5" style={{color:'#00ff88'}}/>
-                  <div><div className="text-slate-400">Security line</div><div className="text-white font-medium">240-729-0299</div></div>
-                </div>
-                <div className="flex gap-3">
-                  <Mail className="w-5 h-5 mt-0.5" style={{color:'#00d4ff'}}/>
-                  <div><div className="text-slate-400">Email</div><div className="text-white font-medium">info@myitguard.com</div></div>
-                </div>
-                <div className="flex gap-3">
-                  <Clock className="w-5 h-5 mt-0.5" style={{color:'#f472b6'}}/>
-                  <div><div className="text-slate-400">SOC hours</div><div className="text-white font-medium">24/7/365 monitoring</div></div>
-                </div>
+                ))}
               </div>
             </div>
 
-            <div className="glass-card p-6 border border-red-500/20">
-              <h4 className="font-bold mb-2 text-red-300">Active security incident?</h4>
-              <p className="text-sm text-slate-300 mb-4">Don’t wait on a form. Call our IR hotline immediately.</p>
-              <button className="w-full py-3 rounded-xl font-semibold bg-red-500/15 text-red-300 border border-red-500/30 hover:bg-red-500/25 transition-colors flex items-center justify-center gap-2">
-                <AlertTriangle className="w-4 h-4" /> IR Hotline: +1 (555) 911-SEC1
-              </button>
+            <div className="mt-12 pt-6 border-t border-slate-900/60 flex items-center gap-3">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-xs font-mono text-slate-400 tracking-wider">
+                COMMUNICATION FLOWWAYS: SECURE & ON-LINE
+              </span>
             </div>
+          </motion.div>
 
-            <div className="glass-card p-6">
-              <h4 className="font-bold mb-3">What happens next</h4>
-              <ol className="space-y-3 text-sm text-slate-300">
-                <li className="flex gap-3"><span className="text-cyber-green font-bold">1</span> 30-min discovery call with a CISSP</li>
-                <li className="flex gap-3"><span className="text-cyber-green font-bold">2</span> Free risk snapshot & compliance map</li>
-                <li className="flex gap-3"><span className="text-cyber-green font-bold">3</span> Tailored proposal with clear ROI</li>
-              </ol>
-            </div>
-          </div>
+          {/* Right Column: Interaction Form Glass Card */}
+          <motion.div
+            className={`${glassCardClass} relative min-h-[550px] justify-center`}
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.7 }}
+          >
+            {!submitted ? (
+              <form onSubmit={handleSubmit} className="space-y-5 w-full">
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-2">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                      className="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-700 focus:outline-none focus:border-emerald-500/80 focus:ring-1 focus:ring-emerald-500/30 transition-all duration-200"
+                      placeholder="Jane Doe"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-2">
+                      Work Email
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
+                      className="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-700 focus:outline-none focus:border-emerald-500/80 focus:ring-1 focus:ring-emerald-500/30 transition-all duration-200"
+                      placeholder="jane@company.com"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-2">
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) =>
+                        setFormData({ ...formData, phone: e.target.value })
+                      }
+                      className="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-700 focus:outline-none focus:border-emerald-500/80 focus:ring-1 focus:ring-emerald-500/30 transition-all duration-200"
+                      placeholder="+1 (555) 000-0000"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-2">
+                      Company Name
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.company}
+                      onChange={(e) =>
+                        setFormData({ ...formData, company: e.target.value })
+                      }
+                      className="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-700 focus:outline-none focus:border-emerald-500/80 focus:ring-1 focus:ring-emerald-500/30 transition-all duration-200"
+                      placeholder="Acme Corp"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-2">
+                    Requested Service Line
+                  </label>
+                  <select
+                    required
+                    value={formData.service}
+                    onChange={(e) =>
+                      setFormData({ ...formData, service: e.target.value })
+                    }
+                    className="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-300 focus:outline-none focus:border-emerald-500/80 focus:ring-1 focus:ring-emerald-500/30 transition-all duration-200"
+                  >
+                    <option value="" className="text-slate-600">
+                      Select Service
+                    </option>
+                    <option value="vciso">Virtual CISO</option>
+                    <option value="compliance">Compliance Solutions</option>
+                    <option value="assessment">Cyber Risk Assessment</option>
+                    <option value="training">
+                      Security Awareness Training
+                    </option>
+                    <option value="managed">Managed Security Services</option>
+                    <option value="dataprotection">Data Protection</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-2">
+                    Message Details
+                  </label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={formData.message}
+                    onChange={(e) =>
+                      setFormData({ ...formData, message: e.target.value })
+                    }
+                    className="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-700 focus:outline-none focus:border-emerald-500/80 focus:ring-1 focus:ring-emerald-500/30 transition-all duration-200 resize-none h-32"
+                    placeholder="Tell us about your security needs..."
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full group relative flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 p-3.5 text-sm font-semibold text-white hover:from-emerald-400 hover:to-teal-500 transition-all duration-300 shadow-lg shadow-emerald-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span>
+                    {isSubmitting ? "Transmitting..." : "Submit Request"}
+                  </span>
+                  {!isSubmitting && (
+                    <Send className="w-4 h-4 transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
+                  )}
+                </button>
+
+                <p className="text-xs text-slate-500 text-center font-mono tracking-wide uppercase">
+                  Response Window: Within 24 Business Hours
+                </p>
+              </form>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-slate-900/40 rounded-2xl backdrop-blur-sm"
+              >
+                <CheckCircle className="w-16 h-16 mb-4 text-emerald-400 drop-shadow-[0_0_12px_rgba(52,211,153,0.3)]" />
+                <h4 className="text-2xl font-bold mb-2 text-white">
+                  Transmission Successful
+                </h4>
+                <p className="text-slate-400 max-w-xs text-sm">
+                  Your request has been successfully routed. An advisor will
+                  review your variables shortly.
+                </p>
+              </motion.div>
+            )}
+          </motion.div>
         </div>
       </div>
     </section>
