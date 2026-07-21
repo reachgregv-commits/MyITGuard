@@ -33,3 +33,5 @@ jobs:
           local-dir: ./dist/
           server-dir: ""
           state-name: ""
+          security: loose
+          timeout: 60000
