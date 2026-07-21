@@ -24,6 +24,12 @@ jobs:
       - name: Build site
         run: npm run build
 
+      # --- DEBUG STEP START ---
+      - name: Print Remote FTP Working Directory
+        run: |
+          lftp -e "set ssl:verify-certificate no; open -u '${{ secrets.FTP_USERNAME }}','${{ secrets.FTP_PASSWORD }}' ${{ secrets.FTP_SERVER }}; pwd; ls -la; quit"
+      # --- DEBUG STEP END ---
+
       - name: Deploy files via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
