@@ -27,7 +27,7 @@ jobs:
       # --- DEBUG STEP START ---
       - name: Print Remote FTP Working Directory
         run: |
-          lftp -e "set ssl:verify-certificate no; open -u '${{ secrets.FTP_USERNAME }}','${{ secrets.FTP_PASSWORD }}' ${{ secrets.FTP_SERVER }}; pwd; ls -la; quit"
+          curl --ssl-reqd -k -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftps://${{ secrets.FTP_SERVER }}/"
       # --- DEBUG STEP END ---
 
       - name: Deploy files via FTP
