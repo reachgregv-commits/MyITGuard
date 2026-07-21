@@ -24,11 +24,11 @@ jobs:
       - name: Build site
         run: npm run build
 
-      # --- DEBUG STEP START ---
+      # --- DEBUG STEP START --
       - name: Print Remote FTP Working Directory
         run: |
           curl --ssl-reqd -k -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftps://${{ secrets.FTP_SERVER }}/"
-      # --- DEBUG STEP END ---
+      # --- DEBUG STEP END --
 
       - name: Deploy files via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
