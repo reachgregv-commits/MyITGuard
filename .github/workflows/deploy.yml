@@ -18,35 +18,22 @@ jobs:
         with:
           node-version: 22
 
-      - name: Inspect Hostinger FTP Directory
-        run: |
-          npm install basic-ftp
-          node -e "
-          const ftp = require('basic-ftp');
-          async function debug() {
-            const client = new ftp.Client();
-            client.ftp.verbose = true;
-            try {
-              await client.access({
-                host: process.env.FTP_SERVER,
-                user: process.env.FTP_USERNAME,
-                password: process.env.FTP_PASSWORD,
-                port: 21,
-                secure: 'implicit' === false || true,
-                secureOptions: { rejectUnauthorized: false }
-              });
-              console.log('=== CURRENT WORKING DIRECTORY ===');
-              console.log(await client.pwd());
-              console.log('=== LISTING FILES IN CURRENT DIRECTORY ===');
-              console.log(await client.list());
-            } catch(err) {
-              console.error(err);
-            }
-            client.close();
-          }
-          debug();
-          "
-        env:
-          FTP_SERVER: ${{ secrets.FTP_SERVER }}
-          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
-          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build site
+        run: npm run build
+
+      - name: Deploy files via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: 21
+          protocol: ftps
+          local-dir: ./dist/
+          server-dir: ./
+          state-name: ""
+          security: loose
+          timeout: 60000
