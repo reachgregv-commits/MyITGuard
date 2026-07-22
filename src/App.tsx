@@ -37,6 +37,8 @@ import {
   ArrowLeft,
   Share2,
   Send,
+  ChevronLeft,
+  Quote,
   ShieldAlert,
   ShieldCheck,
 } from "lucide-react";
@@ -2710,6 +2712,18 @@ function ServicesSection({
 
   const services = [
     {
+      icon: <Lock className="w-8 h-8" />,
+      title: "Managed Security Services",
+      description: "24/7 security monitoring and incident response.",
+      features: [
+        "24/7 Monitoring",
+        "Incident Response",
+        "Threat Hunting",
+        "SIEM Management",
+      ],
+      badge: "Most Popular",
+    },
+    {
       icon: <Users className="w-8 h-8" />,
       title: "Virtual CISO (vCISO)",
       description:
@@ -2720,7 +2734,7 @@ function ServicesSection({
         "Policy Development",
         "Board Reporting",
       ],
-      badge: "Most Popular",
+      badge: null,
     },
     {
       icon: <FileCheck className="w-8 h-8" />,
@@ -2760,18 +2774,6 @@ function ServicesSection({
       badge: "Proven Results",
     },
     {
-      icon: <Lock className="w-8 h-8" />,
-      title: "Managed Security Services",
-      description: "24/7 security monitoring and incident response.",
-      features: [
-        "24/7 Monitoring",
-        "Incident Response",
-        "Threat Hunting",
-        "SIEM Management",
-      ],
-      badge: null,
-    },
-    {
       icon: <Database className="w-8 h-8" />,
       title: "Data Protection",
       description: "Advanced encryption and data loss prevention.",
@@ -2780,6 +2782,7 @@ function ServicesSection({
         "Backup & Recovery",
         "DLP Solutions",
         "Data Classification",
+        "Data Retention",
       ],
       badge: null,
     },
@@ -4040,6 +4043,8 @@ function ArticleModal({
 //Plans Section
 function PlansSection() {
   const navigate = useNavigate();
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
   const plans = [
     {
       name: "Infantry",
@@ -4054,9 +4059,7 @@ function PlansSection() {
         "Security Questionnaire Support",
         "Compliance Roadmap",
       ],
-      cta: "Get Started",
       popular: false,
-      color: "#00d4ff",
     },
     {
       name: "Premium Infantry",
@@ -4077,9 +4080,7 @@ function PlansSection() {
         "IT Security Gap Assessment",
         "Monthly Security Report",
       ],
-      cta: "Get Started",
       popular: true,
-      color: "#00ff88",
     },
     {
       name: "Elite Fortress",
@@ -4101,9 +4102,7 @@ function PlansSection() {
         "Regulatory Exam Preparation",
         "Dedicated Security Team",
       ],
-      cta: "Contact Sales",
       popular: false,
-      color: "#a78bfa",
     },
   ];
 
@@ -4217,6 +4216,61 @@ function PlansSection() {
         },
       ],
     },
+    {
+      category: "Security Awareness Training",
+      services: [
+        {
+          name: "Interactive Training",
+          description:
+            "Engaging training modules designed to build a strong security culture",
+        },
+        {
+          name: "Phishing Simulations",
+          description:
+            "Real-world simulated phishing campaigns to test and train employees",
+        },
+        {
+          name: "Custom Content",
+          description:
+            "Tailored security awareness materials specific to your industry and policies",
+        },
+        {
+          name: "Progress Tracking",
+          description:
+            "Detailed reporting and metrics on employee completion and security readiness",
+        },
+      ],
+    },
+    {
+      category: "Data Protection",
+      services: [
+        {
+          name: "Encryption",
+          description:
+            "Advanced end-to-end encryption for sensitive data at rest and in transit",
+        },
+        {
+          name: "Backup & Recovery",
+          description:
+            "Reliable data backup strategies and rapid recovery planning",
+        },
+        {
+          name: "DLP Solutions",
+          description:
+            "Data Loss Prevention controls to prevent unauthorized data exfiltration",
+        },
+        {
+          name: "Data Classification",
+          description:
+            "Categorize and label data to ensure proper handling and compliance protection",
+        },
+        {
+          name: "Data Retention",
+          description:
+            "Automated retention policies and secure archiving to comply with regulatory mandates",
+        },
+      ],
+    },
   ];
 
   return (
@@ -4249,60 +4303,81 @@ function PlansSection() {
 
         {/* Pricing Cards */}
         <div className="grid lg:grid-cols-3 gap-8 items-stretch mb-20">
-          {plans.map((plan, index) => (
-            <motion.div
-              key={plan.name}
-              className={`glass-card p-8 relative flex flex-col justify-between h-full ${
-                plan.popular ? "border-cyber-green/50 scale-105 z-10" : ""
-              }`}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-            >
-              <div>
-                {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 badge-cyber px-6 py-2">
-                    Most Popular
-                  </div>
-                )}
+          {plans.map((plan, index) => {
+            const isHovered = hoveredIndex === index;
+            const isAnyHovered = hoveredIndex !== null;
 
-                <div className="text-center mb-8">
-                  <h3
-                    className="text-2xl font-bold mb-2"
-                    style={{ color: plan.color }}
-                  >
-                    {plan.name}
-                  </h3>
-                  <p className="text-slate-400 text-sm mb-6 min-h-[40px]">
-                    {plan.description}
-                  </p>
+            return (
+              <motion.div
+                key={plan.name}
+                onMouseEnter={() => setHoveredIndex(index)}
+                onMouseLeave={() => setHoveredIndex(null)}
+                className={`glass-card p-8 relative flex flex-col justify-between h-full transition-all duration-300 ease-out ${
+                  isHovered
+                    ? "scale-105 z-20 shadow-[0_0_30px_rgba(0,255,136,0.25)] border-cyber-green/80"
+                    : isAnyHovered
+                      ? "blur-[3px] opacity-40 scale-95 z-0"
+                      : plan.popular
+                        ? "border-[#00d4ff]/40 z-10"
+                        : "z-10"
+                }`}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+              >
+                <div>
+                  {plan.popular && (
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 badge-cyber px-6 py-2">
+                      Most Popular
+                    </div>
+                  )}
+
+                  <div className="text-center mb-8">
+                    {/* Default: Bright Cyan (#00d4ff) -> Hover: Cyber Green (#00ff88) */}
+                    <h3
+                      className="text-2xl font-bold mb-2 transition-colors duration-300"
+                      style={{ color: isHovered ? "#00ff88" : "#00d4ff" }}
+                    >
+                      {plan.name}
+                    </h3>
+                    <p className="text-slate-400 text-sm mb-6 min-h-[40px]">
+                      {plan.description}
+                    </p>
+                  </div>
+
+                  <ul className="space-y-3 mb-8">
+                    {plan.features.map((feature, i) => (
+                      <li key={i} className="flex items-start gap-3">
+                        {/* Default: Warm Gold/Cream (#F3E3C3) -> Hover: Cyber Green (#00ff88) */}
+                        <CheckCircle
+                          className="w-5 h-5 flex-shrink-0 mt-0.5 transition-colors duration-300"
+                          style={{ color: isHovered ? "#00ff88" : "#F3E3C3" }}
+                        />
+                        <span className="text-slate-300 text-sm">
+                          {feature}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
 
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <CheckCircle
-                        className="w-5 h-5 flex-shrink-0 mt-0.5"
-                        style={{ color: plan.color }}
-                      />
-                      <span className="text-slate-300 text-sm">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <button
-                className={`w-full py-4 rounded-xl font-semibold transition-all cursor-pointer ${
-                  plan.popular
-                    ? "btn-primary"
-                    : "bg-slate-800 hover:bg-slate-700 text-white"
-                }`}
-              >
-                {plan.cta}
-              </button>
-            </motion.div>
-          ))}
+                {/* Button Container with Fixed Min Height */}
+                <div className="min-h-[56px] flex items-end">
+                  <a
+                    href="#contact"
+                    className={`w-full py-4 rounded-xl font-semibold text-center transition-all duration-300 cursor-pointer bg-[#00ff88] text-slate-950 shadow-[0_0_20px_rgba(0,255,136,0.4)] hover:bg-[#00ff88]/90 ${
+                      isHovered
+                        ? "opacity-100 translate-y-0 pointer-events-auto"
+                        : "opacity-0 translate-y-2 pointer-events-none"
+                    }`}
+                  >
+                    Get Started
+                  </a>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* À La Carte Services Matrix */}
@@ -4379,7 +4454,6 @@ function PlansSection() {
               budget.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              {/* Maps to the Contact Us panel block anchor */}
               <a
                 href="#contact"
                 className="btn-primary flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-semibold transition-all hover:scale-[1.01] active:scale-[0.99]"
@@ -4387,7 +4461,6 @@ function PlansSection() {
                 <Mail className="w-5 h-5" />
                 Schedule Consultation
               </a>
-              {/* Maps to the custom ROI calculator anchor context blocks */}
               <button
                 onClick={() => navigate("/#roi-calculator")}
                 className="bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-semibold transition-all hover:scale-[1.01] active:scale-[0.99]"
@@ -4417,6 +4490,17 @@ const testimonials = [
     color: "#00ff88",
   },
   {
+    name: "Maryann Davenport",
+    title: "Co-Founder",
+    company: "Archmore Group",
+    industry: "Tax Services",
+    content:
+      "As a tax firm, client trust is everything. MyITGuard gave us enterprise-grade security leadership without the full-time CISO cost, guiding us to strict regulatory compliance ahead of schedule without interrupting daily operations. Their proactive team feels like an extension of our own—giving us complete peace of mind knowing our client data is rock-solid secure.",
+    rating: 5,
+    image: "MD",
+    color: "#ffd900",
+  },
+  {
     name: "Michael Chen",
     title: "CEO & Founder",
     company: "CloudScale Inc",
@@ -4441,7 +4525,7 @@ const testimonials = [
   {
     name: "David Thompson",
     title: "IT Director",
-    company: "Manufacturing Corp",
+    company: "US Manufacturing Corp",
     industry: "Manufacturing",
     content:
       "We experienced a ransomware attempt last year. MyITGuard incident response team was on the scene within hours and contained the threat before any damage occurred. They saved our business.",
@@ -4452,7 +4536,7 @@ const testimonials = [
   {
     name: "Lisa Park",
     title: "VP of Operations",
-    company: "Retail Dynamics",
+    company: "Retail Dynamics and eCommerce",
     industry: "Retail",
     content:
       "The security awareness training program reduced our phishing click rate from 35% to under 5% in just 6 months. Our employees are now our first line of defense, not our weakest link.",
@@ -4463,7 +4547,7 @@ const testimonials = [
   {
     name: "Robert Williams",
     title: "Chief Information Officer",
-    company: "Defense Systems LLC",
+    company: "Aero Defense Systems LLC",
     industry: "Defense Contracting",
     content:
       "CMMC certification seemed impossible until we partnered with MyITGuard. Their team understood the requirements perfectly and got us certified ahead of schedule. Now we can bid on DoD contracts with confidence.",
@@ -4475,9 +4559,43 @@ const testimonials = [
 
 // Testimonials Section
 function TestimonialsSection() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isAutoplay, setIsAutoplay] = useState(true);
+
+  // Auto-advance loop every 6 seconds
+  useEffect(() => {
+    if (!isAutoplay || testimonials.length <= 2) return;
+
+    const interval = setInterval(() => {
+      handleNext();
+    }, 6000);
+
+    return () => clearInterval(interval);
+  }, [currentIndex, isAutoplay]);
+
+  const handleNext = () => {
+    // Advances index; loops cleanly around
+    setCurrentIndex((prev) => (prev + 2 >= testimonials.length ? 0 : prev + 2));
+  };
+
+  const handlePrev = () => {
+    setCurrentIndex((prev) =>
+      prev - 2 < 0
+        ? Math.max(
+            0,
+            testimonials.length - (testimonials.length % 2 === 0 ? 2 : 1),
+          )
+        : prev - 2,
+    );
+  };
+
+  // Get current pair (or single item if odd total length at the end)
+  const currentPair = testimonials.slice(currentIndex, currentIndex + 2);
+
   return (
-    <section className="py-24 relative">
+    <section className="py-24 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-6">
+        {/* Section Header */}
         <motion.div
           className="text-center mb-16"
           initial={{ opacity: 0, y: 30 }}
@@ -4498,68 +4616,129 @@ function TestimonialsSection() {
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {testimonials.map((testimonial, index) => (
-            <motion.div
-              key={testimonial.name}
-              className="glass-card p-8 relative"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-            >
-              {/* Rating Stars */}
-              <div className="flex gap-1 mb-4">
-                {[...Array(testimonial.rating)].map((_, i) => (
-                  <svg
-                    key={i}
-                    className="w-5 h-5"
-                    fill={testimonial.color}
-                    viewBox="0 0 20 20"
+        {/* Carousel Container */}
+        <div
+          className="relative px-2 sm:px-10"
+          onMouseEnter={() => setIsAutoplay(false)}
+          onMouseLeave={() => setIsAutoplay(true)}
+        >
+          <div className="min-h-[300px]">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentIndex}
+                initial={{ opacity: 0, x: 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -40 }}
+                transition={{ duration: 0.4, ease: "easeInOut" }}
+                className="grid md:grid-cols-2 gap-6 items-stretch"
+              >
+                {currentPair.map((item, idx) => (
+                  <div
+                    key={item.name + idx}
+                    className="glass-card p-8 relative flex flex-col justify-between h-full shadow-xl border border-slate-800/80"
                   >
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
+                    <Quote className="absolute top-6 right-6 w-14 h-14 text-slate-700/20 pointer-events-none" />
+
+                    <div>
+                      {/* Rating Stars */}
+                      <div className="flex gap-1 mb-4">
+                        {[...Array(item.rating)].map((_, i) => (
+                          <svg
+                            key={i}
+                            className="w-4 h-4"
+                            fill={item.color || "#00ff88"}
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        ))}
+                      </div>
+
+                      {/* Content */}
+                      <p className="text-slate-300 text-sm md:text-base mb-6 italic leading-relaxed">
+                        "{item.content}"
+                      </p>
+                    </div>
+
+                    {/* Author Details */}
+                    <div className="flex items-center gap-4 mt-auto pt-4 border-t border-slate-800/60">
+                      <div
+                        className="w-11 h-11 rounded-full flex items-center justify-center font-bold text-slate-950 text-sm flex-shrink-0"
+                        style={{
+                          backgroundColor: item.color || "#00ff88",
+                        }}
+                      >
+                        {item.image}
+                      </div>
+                      <div>
+                        <div className="font-bold text-white text-base">
+                          {item.name}
+                        </div>
+                        <div className="text-xs text-slate-400">
+                          {item.title}
+                        </div>
+                        <div
+                          className="text-xs font-semibold mt-0.5"
+                          style={{ color: item.color || "#00ff88" }}
+                        >
+                          {item.company} • {item.industry}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 ))}
-              </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
 
-              {/* Testimonial Content */}
-              <p className="text-slate-300 mb-6 italic">
-                "{testimonial.content}"
-              </p>
+          {/* Controls (Render if total testimonials exceed 2) */}
+          {testimonials.length > 2 && (
+            <>
+              <button
+                onClick={handlePrev}
+                aria-label="Previous Testimonials"
+                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 sm:-translate-x-6 p-2.5 rounded-full bg-slate-800/90 border border-slate-700 text-white hover:bg-[#00ff88] hover:text-slate-950 transition-all duration-300 shadow-lg hover:scale-110 active:scale-95"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
 
-              {/* Author Info */}
-              <div className="flex items-center gap-4">
-                <div
-                  className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-white"
-                  style={{ backgroundColor: testimonial.color }}
-                >
-                  {testimonial.image}
-                </div>
-                <div>
-                  <div className="font-semibold text-white">
-                    {testimonial.name}
-                  </div>
-                  <div className="text-sm text-slate-400">
-                    {testimonial.title}
-                  </div>
-                  <div className="text-xs" style={{ color: testimonial.color }}>
-                    {testimonial.company} • {testimonial.industry}
-                  </div>
-                </div>
-              </div>
-
-              {/* Quote Icon */}
-              <div className="absolute top-4 right-4 text-6xl text-slate-700 opacity-30 font-serif">
-                "
-              </div>
-            </motion.div>
-          ))}
+              <button
+                onClick={handleNext}
+                aria-label="Next Testimonials"
+                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 sm:translate-x-6 p-2.5 rounded-full bg-slate-800/90 border border-slate-700 text-white hover:bg-[#00ff88] hover:text-slate-950 transition-all duration-300 shadow-lg hover:scale-110 active:scale-95"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </>
+          )}
         </div>
+
+        {/* Pagination Dots */}
+        {testimonials.length > 2 && (
+          <div className="flex justify-center items-center gap-2 mt-8">
+            {Array.from({ length: Math.ceil(testimonials.length / 2) }).map(
+              (_, idx) => {
+                const isActive = Math.floor(currentIndex / 2) === idx;
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentIndex(idx * 2)}
+                    aria-label={`Go to slide pair ${idx + 1}`}
+                    className={`h-2.5 rounded-full transition-all duration-300 ${
+                      isActive
+                        ? "w-8 bg-[#00ff88]"
+                        : "w-2.5 bg-slate-700 hover:bg-slate-500"
+                    }`}
+                  />
+                );
+              },
+            )}
+          </div>
+        )}
       </div>
     </section>
   );
 }
-
 // GLOBAL CONSTANTS, INTERFACES, & UTILITIES
 const SERVICES = [
   "Cloud",
